@@ -1,5 +1,5 @@
 using Test
-include("../src/Pinecone.jl")
+using Pinecone
 
 @testset "PineconeIndex Type Tests" begin
    TESTINDEX = "test"
