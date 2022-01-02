@@ -1,0 +1,7 @@
+name = "Pinecone"
+uuid = "4f1cf088-3b61-46ee-8c53-750de5be77e3"
+authors = ["tim "]
+version = "0.1.0"
+
+[deps]
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"

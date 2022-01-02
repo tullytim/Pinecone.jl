@@ -1,1 +1,1 @@
-# Pinecone.jl
+# Pinecone.jl.dev
