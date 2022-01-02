@@ -5,7 +5,7 @@ module Pinecone
 using JSON3
 using StructTypes
 
-export PineconeContext, PineconeIndex, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index, jess
+export PineconeContext, PineconeIndex, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index
 
 struct PineconeContext
     apikey::String
