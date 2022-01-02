@@ -1,7 +1,9 @@
 name = "Pinecone"
-uuid = "4f1cf088-3b61-46ee-8c53-750de5be77e3"
-authors = ["tim "]
+uuid = "ee90fdae-f7f0-4648-8b00-9c0307cf46d9"
+authors = ["Tim Tully <tully_tim@yahoo.com>"]
 version = "0.1.0"
 
 [deps]
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
