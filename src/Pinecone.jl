@@ -1,4 +1,4 @@
-__precompile__(false)
+__precompile__(true)
 
 module Pinecone
 
@@ -103,7 +103,7 @@ end
 whoami(context::PineconeContext) = begin
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
     if response.status == 200
-        String(response.body)
+        return String(response.body)
     end
 end
 
