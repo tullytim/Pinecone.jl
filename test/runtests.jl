@@ -3,8 +3,8 @@ using Pinecone
 
 @testset "PineconeIndex Type Tests" begin
    TESTINDEX = "test"
-   pineconeindex = Pinecone.PineconeIndex(TESTINDEX)
-   @test typeof(pineconeindex) == Pinecone.PineconeIndex
+   pineconeindex = PineconeIndex(TESTINDEX)
+   @test typeof(pineconeindex) == PineconeIndex
    @test pineconeindex.indexname == TESTINDEX
 end;
 
@@ -12,7 +12,7 @@ end;
    KEY = "asdf-asdfadfs-adsfafds"
    ENV = "us.east.gcp"
    PROJECT = "testproject"
-   pineconecontext = Pinecone.PineconeContext(KEY, ENV, PROJECT)
+   pineconecontext = PineconeContext(KEY, ENV, PROJECT)
    @test typeof(pineconecontext) == Pinecone.PineconeContext
    @test pineconecontext.apikey == KEY
    @test pineconecontext.cloudenvironment == ENV
@@ -23,8 +23,8 @@ end
    VID = "vectorid"
    VALUES = [0.1, 0.2, 0.3, 0.4]
    META = Dict{String, Any}("foo"=>"bar", "key"=>"value", "numeric"=>1234)
-   pineconevector = Pinecone.PineconeVector(VID, VALUES, META)
-   @test typeof(pineconevector) == Pinecone.PineconeVector
+   pineconevector = PineconeVector(VID, VALUES, META)
+   @test typeof(pineconevector) == PineconeVector
    @test pineconevector.id == VID
    @test length(pineconevector.values) == 4
    @test typeof(pineconevector.values) == Vector{Float64}

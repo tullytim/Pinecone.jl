@@ -1,11 +1,11 @@
-__precompile__(true)
+__precompile__(false)
 
 module Pinecone
 
 using JSON3
 using StructTypes
 
-export PineconeContext, PineconeIndex, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index
+export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index
 
 struct PineconeContext
     apikey::String
@@ -44,12 +44,14 @@ end
 
 
 init(api_key::String, environment::String) = begin
-    rvdict = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), api_key)
-    println("init says we are " * rvdict["project_name"])
-    @assert(!isempty(rvdict["project_name"]))
-    PineconeContext(api_key, environment, rvdict["project_name"])
+    response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), api_key)
+    if response.status == 200
+        rvdict = pineconeGetDict(String(response.body))
+        PineconeContext(api_key, environment, rvdict["project_name"])
+    end
 end #init
 
+# note no repsonse body from create, derive success from the HTTP 204
 create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}()) = begin
     println("Creating index $indexname with metric $metric replicas $replicas, shards $shards")
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTCREATEINDEX)
@@ -60,7 +62,8 @@ create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::
     if length(indexconfig) > 0
         postbody["index_config"] = indexconfig
     end
-    pineconeHTTPPost(url, ctx, JSON3.write(postbody))
+    response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
+    response != nothing && response.status == 204 ? true : false
 end  #create_index
 
 Index(indexname::String) = begin
@@ -86,22 +89,37 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
         body["namespace"] = namespace
     end
     postbody = JSON3.write(body)
-    pineconeHTTPPost(url, ctx, postbody)
+    response = pineconeHTTPPost(url, ctx, postbody)
+    if response.status == 200
+        return String(response.body)
+    end
+    nothing
 end #query
 
-list_indexes(context::PineconeContext) = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
+list_indexes(context::PineconeContext) = begin
+    pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
+end
 
-whoami(context::PineconeContext) = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
+whoami(context::PineconeContext) = begin
+    response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
+    if response.status == 200
+        String(response.body)
+    end
+end
 
+# We get back 204 on successful delete, otherwise 404 if index didn't exist
 delete_index(ctx::PineconeContext, indexobj::PineconeIndex) = begin
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
-    pineconeHTTPDelete(url, ctx)
+    response = pineconeHTTPDelete(url, ctx)
+    response !== nothing && response.status == 204 ? true : false
 end
 
 describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex) = begin
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDESCRIBEINDEXSTATS)
-    pineconeHTTPGet(url, ctx)
+    response = pineconeHTTPGet(url, ctx)
+    if response.status == 200
+        return String(response.body)
+    end
 end
-jess() = println("my wife")
 
 end # module
