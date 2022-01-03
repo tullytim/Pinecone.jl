@@ -13,8 +13,11 @@ pkg> add Pinecone
 ```
 or by using Pkg functions
 ```julia
-julia> using Pkg; Pkg.add("Pinecone")
+julia> using Pkg
+julia> Pkg.add("Pinecone")
 ```
+## Project Status
+The package is tested against Julia 1.6 on Linux, macOS and Windows.
 
 ## Contributing and Questions
 
