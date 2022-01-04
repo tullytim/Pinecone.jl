@@ -104,7 +104,9 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
     end
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
-    if response.status == 200
+    if response == nothing
+        return nothing
+    elseif response.status == 200 || response.status == 400
         return String(response.body)
     end
     nothing
