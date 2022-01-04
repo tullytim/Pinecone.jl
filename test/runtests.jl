@@ -1,6 +1,8 @@
 using Test
 using Pinecone
 
+GOODAPIKEY = ENV["PINECONE_API_KEY"]
+
 @testset "PineconeIndex Type Tests" begin
    TESTINDEX = "test"
    pineconeindex = PineconeIndex(TESTINDEX)
@@ -35,7 +37,7 @@ end
 @testset "Test Init" begin
    #make a bogus init() call, shoud return nothing
    BADAPIKEY = "123456"
-   GOODAPIKEY = ENV["PINECONE_API_KEY"]
+   
    println("*** USING KEY: ", GOODAPIKEY)
    ENV = "us.west.gcp"
    context = Pinecone.init(BADAPIKEY, ENV)
