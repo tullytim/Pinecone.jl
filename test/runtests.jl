@@ -21,6 +21,8 @@ end;
    ENV = "us.east.gcp"
    PROJECT = "testproject"
    pineconecontext = PineconeContext(KEY, ENV, PROJECT)
+   #testing print out for codecov
+   println("pineconecontext is ", pineconecontext)
    @test typeof(pineconecontext) == PineconeContext
    @test pineconecontext.apikey == KEY
    @test pineconecontext.cloudenvironment == ENV
@@ -38,6 +40,8 @@ end
    @test typeof(pineconevector.values) == Vector{Float64}
    @test length(pineconevector.metadata) == 3
    @test typeof(pineconevector.metadata) == Dict{String,Any}
+   #testing print out for codecov
+   println("pineconevector is ", pineconevector)
 end
 
 @testset "Test Init" begin
@@ -90,7 +94,7 @@ end
       #delete in case already present from previous failure
       result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
       #sleep to wait for delete to go thru, backend takes a bit
-      sleep(10)
+      sleep(60)
       indexconfig = Dict{String, Any}("k_bits"=>512, "hybrid"=>true)
       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
       println("CREATE(): ", result)
