@@ -65,4 +65,7 @@ Pinecone.upsert(pinecone_context, pinecone_index, [testvector], "testnamespace")
 #query data using Vector{Vector{Float64}} as the third argument
 json = Pinecone.query(pinecone_context, pinecone_index,  
 [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
+
+#query data using Vector{PineconeVector} as the third argument
+json = Pinecone.query(pinecone_context, pinecone_index, [testvector, testvector2], 4)
 ```
