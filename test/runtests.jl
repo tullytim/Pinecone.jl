@@ -10,6 +10,10 @@ TESTINDEX = "filter-example"
    pineconeindex = PineconeIndex(TESTINDEX)
    @test typeof(pineconeindex) == PineconeIndex
    @test pineconeindex.indexname == TESTINDEX
+   pineconeindex = Pinecone.Index(TESTINDEX)
+   @test typeof(pineconeindex) == PineconeIndex
+   @test pineconeindex.indexname == TESTINDEX
+   println("PineconeIndex is ", pineconeindex)
 end;
 
 @testset "PineconeContext Type Tests" begin
@@ -79,7 +83,28 @@ end
    @test haskey(parsed, "dimension") == true
 end
 
-@testset "Test query()" begin
+@testset verbose = true "Create/Delete" begin
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   testindexname = "unittestindex"
+   @testset "Create" begin
+      #delete in case already present from previous failure
+      result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
+      #sleep to wait for delete to go thru, backend takes a bit
+      sleep(10)
+      indexconfig = Dict{String, Any}("k_bits"=>512, "hybrid"=>true)
+      result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
+      println("CREATE(): ", result)
+      @test result == true
+   end
+   @testset "Delete" begin
+      sleep(5)
+      result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
+      println("DELETE(): ", result)
+      @test result == true
+   end
+end
+
+@testset verbose = true "Test query()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
    testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
@@ -91,9 +116,16 @@ end
    [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
    @test result !== nothing
    @test typeof(result) == String
+   #test with namespace 
+   result = Pinecone.query(context, index,  
+   #should get nothing here w/ this bogus namespace
+   [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4, true, "bogusempty")
+   println("query() with namepsace result: $result")
+   #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
+   @test result == nothing
 end
 
-@testset "Test upsert()" begin
+@testset verbose = true "Test upsert()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
    testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
