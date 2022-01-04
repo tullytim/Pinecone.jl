@@ -42,9 +42,17 @@ function __init__()
     nothing
 end
 
-
-init(api_key::String, environment::String) = begin
-    response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), api_key)
+"""
+    init(apikey, environment)
+Initialize the Pinecone environment using your API Key and a specific environment.
+This returns a PineconeContext instance which you'll use for subsequent calls such as query() and upsert().
+```julia
+using Pinecone
+context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
+```
+"""
+init(apikey::String, environment::String) = begin
+    response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), apikey)
     if response == nothing
         return nothing
     elseif response.status == 200
@@ -106,7 +114,7 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
     response = pineconeHTTPPost(url, ctx, postbody)
     if response == nothing
         return nothing
-    elseif response.status == 200 || response.status == 400
+    elseif response.status == 200 || response.statuss == 400
         return String(response.body)
     end
     nothing
