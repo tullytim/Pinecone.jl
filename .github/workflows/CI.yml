@@ -29,6 +29,6 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-uploadcodecov@latest
-#        env:
-#          CODECOV_TOKEN: $
-#      - uses: codecov/codecov-action@v2
+        env:
+          CODECOV_TOKEN: 36520be0-69ae-4122-9454-1d98959e1fbd
+      - uses: codecov/codecov-action@v2
