@@ -3,7 +3,7 @@
 *Pinecone client for Julia*
 
 [![CI](https://github.com/tullytim/Pinecone.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/tullytim/Pinecone.jl/actions/workflows/CI.yml)
-
+[![codecov](https://codecov.io/gh/tullytim/Pinecone.jl/branch/main/graph/badge.svg?token=9KN1APH5F5)](https://codecov.io/gh/tullytim/Pinecone.jl)
 ## Installation
 
 The package can be installed with Julia's package manager,
