@@ -11,7 +11,7 @@ pinecone_index = Pinecone.Index("filter-example");
 println("Index obj is $pinecone_index");
 
 testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-testvector = Pinecone.PineconeVector("testid", [0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
 
 
 @time json = Pinecone.whoami(pinecone_context)
@@ -22,14 +22,18 @@ println("WHOAMI Parsed user_name: ", json.user_name)
 @time json =Pinecone.describe_index_stats(pinecone_context, pinecone_index)
 println("DESCRIBE INDEX(): ", json)
 
-#=
+
 @time Pinecone.upsert(pinecone_context, pinecone_index, [testvector], "testnamespace")
 #test no namespace
 @time Pinecone.upsert(pinecone_context, pinecone_index, [testvector])
 
+
+@time json = Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
+
 @time json = Pinecone.query(pinecone_context, pinecone_index,  
 [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
 
+#=
 println("Query() response: ", json)
 
 

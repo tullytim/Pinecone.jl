@@ -77,9 +77,20 @@ upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVe
         body["namespace"] = namespace
     end
     postbody = JSON3.write(body)
-    println("upsert body is $postbody")
-    pineconeHTTPPost(url, ctx, postbody)
+    response = pineconeHTTPPost(url, ctx, postbody)
+    if response.status == 200
+        return String(response.body)
+    end
+    nothing
 end #upsert
+
+query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
+    rawvectors = Vector{Vector{Float64}}()
+    for i in length(queries)
+        push!(rawvectors, queries[i].values)
+    end
+    query(ctx, indexobj, rawvectors, topk, includevalues, namespace)
+end
 
 query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
@@ -95,6 +106,7 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
     end
     nothing
 end #query
+
 
 list_indexes(context::PineconeContext) = begin
     pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
