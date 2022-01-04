@@ -30,5 +30,6 @@ jobs:
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
-         CODECOV_TOKEN: ${{ secrets.PineconeAPIKey }}
+         CODECOV_TOKEN: ${{ secrets.PINECONEAPIKEY }}
       - uses: codecov/codecov-action@v2
+         CODECOV_TOKEN: ${{ secrets.PINECONEAPIKEY }}
