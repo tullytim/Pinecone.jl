@@ -112,7 +112,10 @@ end #query
 
 
 list_indexes(context::PineconeContext) = begin
-    pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
+    response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
+    if response.status == 200
+        return String(response.body)
+    end
 end
 
 whoami(context::PineconeContext) = begin
