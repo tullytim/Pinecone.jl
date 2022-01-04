@@ -34,8 +34,10 @@ end
 
 @testset "Test Init" begin
    #make a bogus init() call, shoud return nothing
-   APIKEY = "123456"
+   BADAPIKEY = "123456"
+   GOODAPIKEY = ENV["PINECONE_API_KEY"]
+   println("*** USING KEY: ", GOODAPIKEY)
    ENV = "us.west.gcp"
-   context = Pinecone.init(APIKEY, ENV)
+   context = Pinecone.init(BADAPIKEY, ENV)
    @test context == nothing
 end

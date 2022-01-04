@@ -28,7 +28,9 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
+        env:
+         PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
-         CODECOV_TOKEN: ${{ secrets.PINECONEAPIKEY }}
+         CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
       - uses: codecov/codecov-action@v2
