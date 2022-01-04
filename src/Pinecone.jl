@@ -45,10 +45,13 @@ end
 
 init(api_key::String, environment::String) = begin
     response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), api_key)
-    if response.status == 200
+    if response == nothing
+        return nothing
+    elseif response.status == 200
         rvdict = pineconeGetDict(String(response.body))
-        PineconeContext(api_key, environment, rvdict["project_name"])
+        return PineconeContext(api_key, environment, rvdict["project_name"])
     end
+    nothing
 end #init
 
 # note no repsonse body from create, derive success from the HTTP 204

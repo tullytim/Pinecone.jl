@@ -13,7 +13,7 @@ end;
    ENV = "us.east.gcp"
    PROJECT = "testproject"
    pineconecontext = PineconeContext(KEY, ENV, PROJECT)
-   @test typeof(pineconecontext) == Pinecone.PineconeContext
+   @test typeof(pineconecontext) == PineconeContext
    @test pineconecontext.apikey == KEY
    @test pineconecontext.cloudenvironment == ENV
    @test pineconecontext.projectname == PROJECT
@@ -30,4 +30,12 @@ end
    @test typeof(pineconevector.values) == Vector{Float64}
    @test length(pineconevector.metadata) == 3
    @test typeof(pineconevector.metadata) == Dict{String,Any}
+end
+
+@testset "Test Init" begin
+   #make a bogus init() call, shoud return nothing
+   APIKEY = "123456"
+   ENV = "us.west.gcp"
+   context = Pinecone.init(APIKEY, ENV)
+   @test context == nothing
 end
