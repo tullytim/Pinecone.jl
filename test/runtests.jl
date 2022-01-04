@@ -2,6 +2,7 @@ using Test
 using Pinecone
 
 GOODAPIKEY = ENV["PINECONE_API_KEY"]
+CLOUDENV="us-west1-gcp"
 
 @testset "PineconeIndex Type Tests" begin
    TESTINDEX = "test"
@@ -35,11 +36,28 @@ end
 end
 
 @testset "Test Init" begin
-   #make a bogus init() call, shoud return nothing
-   BADAPIKEY = "123456"
-   
-   println("*** USING KEY: ", GOODAPIKEY)
-   ENV = "us.west.gcp"
-   context = Pinecone.init(BADAPIKEY, ENV)
+   #make a bogus init() call, should return nothing
+   BADAPIKEY = "zzzz123456"
+   context = Pinecone.init(BADAPIKEY, "badcloud")
+
    @test context == nothing
+
+   #now check for proper setup
+   goodcontext = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   @test goodcontext != nothing
+   @test typeof(goodcontext) == PineconeContext
+end
+
+@testset "Test whoami()" begin
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   result = Pinecone.whoami(context)
+   @test result !== nothing
+   @test typeof(result) == String
+end
+
+@testset "Test list_indexes()" begin
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   result = Pinecone.list_indexes(context)
+   @test result !== nothing
+   @test typeof(result) == String
 end
