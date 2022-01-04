@@ -10,6 +10,8 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{matrix.os}}
+    env:
+      PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
     strategy:
       matrix:
         version:
@@ -28,8 +30,6 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
-        env:
-         PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
          CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
