@@ -1,5 +1,6 @@
 using Test
 using Pinecone
+using JSON3
 
 GOODAPIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
@@ -59,16 +60,23 @@ end
 @testset "Test list_indexes()" begin
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    result = Pinecone.list_indexes(context)
+   println("list_indexes() result: ", result)
    @test result !== nothing
    @test typeof(result) == String
+   parsed = JSON3.read(result)
+   @test length(parsed) >= 0
 end
 
 @testset "Test describe_index_stats()" begin
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    index = PineconeIndex(TESTINDEX)
    result = Pinecone.describe_index_stats(context, index)
+   println("result was $result")
    @test result !== nothing
    @test typeof(result) == String
+   parsed = JSON3.read(result)
+   @test haskey(parsed, "namespaces") == true
+   @test haskey(parsed, "dimension") == true
 end
 
 @testset "Test query()" begin
@@ -81,6 +89,20 @@ end
    @test typeof(result) == String
    result = Pinecone.query(context, index,  
    [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
+   @test result !== nothing
+   @test typeof(result) == String
+end
+
+@testset "Test upsert()" begin
+   testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
+   testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   index = PineconeIndex(TESTINDEX)
+   result = Pinecone.upsert(context, index, [testvector], "testnamespace")
+   @test result !== nothing
+   @test typeof(result) == String
+   #test no namespace
+   result = Pinecone.upsert(context, index, [testvector])
    @test result !== nothing
    @test typeof(result) == String
 end
