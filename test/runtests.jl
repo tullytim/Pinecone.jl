@@ -3,9 +3,9 @@ using Pinecone
 
 GOODAPIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
+TESTINDEX = "filter-example"
 
 @testset "PineconeIndex Type Tests" begin
-   TESTINDEX = "test"
    pineconeindex = PineconeIndex(TESTINDEX)
    @test typeof(pineconeindex) == PineconeIndex
    @test pineconeindex.indexname == TESTINDEX
@@ -49,6 +49,7 @@ end
 end
 
 @testset "Test whoami()" begin
+   println("TEST WITH APIKEY: ", GOODAPIKEY)
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    result = Pinecone.whoami(context)
    @test result !== nothing
@@ -58,6 +59,28 @@ end
 @testset "Test list_indexes()" begin
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    result = Pinecone.list_indexes(context)
+   @test result !== nothing
+   @test typeof(result) == String
+end
+
+@testset "Test describe_index_stats()" begin
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   index = PineconeIndex(TESTINDEX)
+   result = Pinecone.describe_index_stats(context, index)
+   @test result !== nothing
+   @test typeof(result) == String
+end
+
+@testset "Test query()" begin
+   testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
+   testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   index = PineconeIndex(TESTINDEX)
+   result = Pinecone.query(context, index, [testvector], 4)
+   @test result !== nothing
+   @test typeof(result) == String
+   result = Pinecone.query(context, index,  
+   [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
    @test result !== nothing
    @test typeof(result) == String
 end
