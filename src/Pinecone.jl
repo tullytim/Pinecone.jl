@@ -1,4 +1,4 @@
-__precompile__(true)
+__precompile__(false)
 
 module Pinecone
 
@@ -43,9 +43,12 @@ function __init__()
 end
 
 """
-    init(apikey, environment)
+init(apikey::String, environment::String)
 Initialize the Pinecone environment using your API Key and a specific environment.
+
 This returns a PineconeContext instance which you'll use for subsequent calls such as query() and upsert().
+Your API Key and the cloud environment for your indexes are easily found in the Pinecone console.
+On failure returns nothing.
 ```julia
 using Pinecone
 context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
@@ -57,12 +60,23 @@ init(apikey::String, environment::String) = begin
         return nothing
     elseif response.status == 200
         rvdict = pineconeGetDict(String(response.body))
-        return PineconeContext(api_key, environment, rvdict["project_name"])
+        return PineconeContext(apikey, environment, rvdict["project_name"])
     end
     nothing
 end #init
 
 # note no repsonse body from create, derive success from the HTTP 204
+"""
+Creates an index with a given PineconeContext, which can be accessed by a call to init(), the name of the index, and the number of dimensions.
+Note that there are other parameters for the distance metric, indextype, number of replicas and shards as well as the indexconfig. 
+This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+
+**Example:**
+```julia
+context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
+result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
+```
+"""
 create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}()) = begin
     println("Creating index $indexname with metric $metric replicas $replicas, shards $shards")
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTCREATEINDEX)
@@ -77,11 +91,32 @@ create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::
     response != nothing && response.status == 204 ? true : false
 end  #create_index
 
+"""
+Returns a PineconeIndex type which is used for query() and upsert() of data against a specific index. 
+
+**Example:**
+```julia
+pineconeindex = Pinecone.Index("myindex"")
+```
+"""
 Index(indexname::String) = begin
     PineconeIndex(indexname);
 end #Index
 
-upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace=nothing) = begin
+"""
+upserts a Julia Vector of type PineconeVector using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to nothing if not passed.)
+On success returns a JSON blob as a String type, and nothing if it fails. 
+This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+
+**Example:**
+```julia
+testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
+context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+index = PineconeIndex(TESTINDEX)
+result = Pinecone.upsert(context, index, [testvector], "testnamespace")
+```
+"""
+upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String=nothing) = begin
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTUPSERT)
     body = Dict{String, Any}("vectors" => vectors)
     if namespace !== nothing
@@ -95,6 +130,19 @@ upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVe
     nothing
 end #upsert
 
+"""
+upserts a Julia Vector of type PineconeVector using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to nothing if not passed.)
+On success returns a JSON blob as a String type, and nothing if it fails.
+topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+
+**Example:**
+```julia
+testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
+context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+index = PineconeIndex(TESTINDEX)
+result = Pinecone.upsert(context, index, [testvector], "testnamespace")
+```
+"""
 query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
     rawvectors = Vector{Vector{Float64}}()
     for i in length(queries)
@@ -103,6 +151,16 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVec
     query(ctx, indexobj, rawvectors, topk, includevalues, namespace)
 end
 
+"""
+upserts a Julia Vector of Vector of Float64 using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to nothing if not passed.)
+On success returns a JSON blob as a String type, and nothing if it fails.
+topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+
+**Example:**
+```julia
+result = Pinecone.query(context, index, [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
+```
+"""
 query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
     body = Dict{String, Any}("topK"=>topk, "include_values"=>includevalues)
