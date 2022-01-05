@@ -1,4 +1,4 @@
-__precompile__(false)
+__precompile__(true)
 
 module Pinecone
 
@@ -104,7 +104,7 @@ Index(indexname::String) = begin
 end #Index
 
 """
-upserts a Julia Vector of type PineconeVector using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to nothing if not passed.)
+upserts a Julia Vector of type PineconeVector using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to not being applied to query if not passed.)
 On success returns a JSON blob as a String type, and nothing if it fails. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
@@ -116,10 +116,10 @@ index = PineconeIndex(TESTINDEX)
 result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 ```
 """
-upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String=nothing) = begin
+upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String="") = begin
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTUPSERT)
     body = Dict{String, Any}("vectors" => vectors)
-    if namespace !== nothing
+    if namespace !== nothing && namespace != ""
         body["namespace"] = namespace
     end
     postbody = JSON3.write(body)
@@ -143,7 +143,7 @@ index = PineconeIndex(TESTINDEX)
 result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 ```
 """
-query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
+query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="") = begin
     rawvectors = Vector{Vector{Float64}}()
     for i in length(queries)
         push!(rawvectors, queries[i].values)

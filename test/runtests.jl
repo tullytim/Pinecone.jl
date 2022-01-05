@@ -94,7 +94,7 @@ end
       #delete in case already present from previous failure
       result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
       #sleep to wait for delete to go thru, backend takes a bit
-      sleep(120)
+      sleep(60)
       indexconfig = Dict{String, Any}("k_bits"=>512, "hybrid"=>true)
       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
       println("CREATE(): ", result)
@@ -134,11 +134,15 @@ end
    testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    index = PineconeIndex(TESTINDEX)
+
    result = Pinecone.upsert(context, index, [testvector], "testnamespace")
+
    @test result !== nothing
    @test typeof(result) == String
    #test no namespace
+
    result = Pinecone.upsert(context, index, [testvector])
+   
    @test result !== nothing
    @test typeof(result) == String
 end
