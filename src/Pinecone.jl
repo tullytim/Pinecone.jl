@@ -142,16 +142,26 @@ upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVe
 end #upsert
 
 """
+    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")
 
-On success returns a JSON blob as a String type, and nothing if it fails.
-topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+Query an index using the given context that match ``queries`` passed in.  The ``PineconeVector`` that is queries is a simple ``PineconeVector`` as described above.
+Note there is an another version of ``query()`` that takes in a ``Vector{Vector{Float64}}`` for the ``queries`` parameter.  Functionally equivalent.
+Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
+
+topk is an optional parameter which defaults to 10 if not specified.  Do recommend using JSON3 to parse the blob.
+
 
 # Example
-```julia
-testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
-context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-index = PineconeIndex(TESTINDEX)
-result = Pinecone.upsert(context, index, [testvector], "testnamespace")
+```julia-repl
+julia> testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
+julia> pinecone_context = Pinecone.init("abcdef-1234-zyxv", "us-west1-gcp")
+abcdef-1234-zyxv / us-west1-gcp / 1c9c2f3
+julia> pinecone_index = Pinecone.Index("filter-example");
+julia> testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+PineconeVector is id: testid values: [0.3, 0.11, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.4, 0.3]meta: Dict{String, Any}("genre" => "documentary", "year" => 2019)
+julia> Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
+"{\"results\":[{\"matches\":[{\"id\":\"testid\",\"score\":3.98966023e-07,\"values\":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3]},{\"id\":\"C\",\"score\":0.0461001098,\"values\":[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3]}
+],\"namespace\":\"\"}]}"
 ```
 """
 query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="") = begin
@@ -165,12 +175,23 @@ end
 """
     query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
 
-On success returns a JSON blob as a String type, and nothing if it fails.
-topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+Query an index using the given context that match ``queries`` passed in. Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
+Note there is an alternate form for ``query()`` that takes in a ``Vector{PineconeVector}`` instead.  Functionally equivalent.
+topk is an optional parameter which defaults to 10 if not specified.  Do recommend using JSON3 to parse the blob.
+
 
 # Example
-```julia
-result = Pinecone.query(context, index, [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
+```julia-repl
+julia> testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
+julia> pinecone_context = Pinecone.init("abcdef-1234-zyxv", "us-west1-gcp")
+abcdef-1234-zyxv / us-west1-gcp / 1c9c2f3
+julia> pinecone_index = Pinecone.Index("filter-example");
+julia> testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+PineconeVector is id: testid values: [0.3, 0.11, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.4, 0.3]meta: Dict{String, Any}("genre" => "documentary", "year" => 2019)
+julia> Pinecone.query(pinecone_context, pinecone_index,  
+[[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
+"{\"results\":[{\"matches\":[{\"id\":\"testid\",\"score\":3.98966023e-07,\"values\":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3]},{\"id\":\"C\",\"score\":0.0461001098,\"values\":[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3]}
+],\"namespace\":\"\"}]}"
 ```
 """
 query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
