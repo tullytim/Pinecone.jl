@@ -142,10 +142,12 @@ end
 
 @testset verbose = true "Test upsert()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   index = PineconeIndex(TESTINDEX)
+   meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+
    @testset "Regular upsert()" begin
       testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
-      context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-      index = PineconeIndex(TESTINDEX)
 
       result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 
@@ -157,9 +159,25 @@ end
       
       @test result !== nothing
       @test typeof(result) == String
+   end
+   @testset "Upsert with invalid args (ArgumentError)" begin
+      #test Arg checking exceptions
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]])
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]])
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]],
+      [Dict{String,Any}("foo"=>"bar")] )
+   end
 
-      meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+   @testset "Upsert with zipped vectors and ids" begin
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]])
+      @test result !== nothing
+      @test typeof(result) == String
+
       result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta)
+      @test result !== nothing
+      @test typeof(result) == String
+
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, "mynamespace")
       @test result !== nothing
       @test typeof(result) == String
    end

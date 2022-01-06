@@ -158,18 +158,17 @@ result = Pinecone.upsert(pinecone_context, pinecone_index, ["zipA", "zipB"], [[0
 [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, "mynamespace")
 ```
 """
-function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, meta::Array{Dict{String,Any}}=nothing, namespace::String="")
+function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, meta::Array{Dict{String,Any}}=Dict{String,Any}[], namespace::String="")
     numvectors = length(vectors)
     numids = length(ids)
     nummeta = (meta !== nothing ? length(meta) : 0)
     if length(ids) !== numvectors 
         throw(ArgumentError("Length of ids does not match length of vectors: $numids vs $numvectors")) 
     end
-    if meta !== nothing && numids !== nummeta
+    if nummeta > 0 && nummeta !== numids
         throw(ArgumentError("Length of ids does not match length of metadata: $numids vs $nummeta"))
     end
-    #pcvectors = [PineconeVector(ids[i], vectors[i], Dict{String, Any}()) for i in 1:numvectors]
-    pcvectors = [PineconeVector(ids[i], vectors[i], meta !== nothing ? meta[i] : Dict{String,Any}()) for i in 1:numvectors]
+    pcvectors = [PineconeVector(ids[i], vectors[i], nummeta > 0 ? meta[i] : Dict{String,Any}()) for i in 1:numvectors]
     upsert(ctx, indexobj, pcvectors, namespace)
 end
 
