@@ -5,7 +5,7 @@ module Pinecone
 using JSON3
 using StructTypes
 
-export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index
+export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index, fetch
 
 struct PineconeContext
     apikey::String
@@ -37,7 +37,7 @@ const ENDPOINTDELETEINDEX = "databases"
 const ENDPOINTQUERYINDEX = "query"
 const ENDPOINTUPSERT = "vectors/upsert"
 const ENDPOINTCREATEINDEX = "databases"
-
+const ENDPOINTFETCH = "vectors/fetch"
 function __init__()
     nothing
 end
@@ -205,11 +205,41 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
     response = pineconeHTTPPost(url, ctx, postbody)
     if response == nothing
         return nothing
-    elseif response.status == 200 || response.statuss == 400
+    elseif response.status == 200 || response.status == 400
         return String(response.body)
     end
     nothing
 end #query
+
+"""
+    fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, namespace::String)
+
+Fetches vectors based on the vector ids for each vector, provided as the ``ids`` array for a given namespace.  Note that namespace is mandatory here.
+
+# Example
+```julia-repl
+julia> context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
+index = PineconeIndex("my-index")
+Pinecone.fetch(context, index, ["testid", "testid2"], "testnamespace")
+{"vectors":{"testid":{"id":"testid","values":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3],"metadata":{"year":2019,"genre":"documentary"}},
+"testid2":{"id":"testid2","values":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3],"metadata":{"genre":"documentary","year":2019}}},"namespace":"testnamespace"}
+```
+"""
+function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, namespace::String)
+    if namespace == nothing
+        return nothing
+    end
+    renamedids = ["ids=$row" for row in ids] 
+    urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
+    url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
+    response = pineconeHTTPGet(url, ctx)
+    if response == nothing
+        return nothing
+    elseif response.status == 200 || response.status == 400
+        return String(response.body)
+    end
+    nothing
+end
 
 """
     list_indexes(context::PineconeContext)
