@@ -5,7 +5,7 @@ module Pinecone
 using JSON3
 using StructTypes
 
-export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index, fetch
+export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index, fetch, delete
 
 struct PineconeContext
     apikey::String
@@ -38,6 +38,13 @@ const ENDPOINTQUERYINDEX = "query"
 const ENDPOINTUPSERT = "vectors/upsert"
 const ENDPOINTCREATEINDEX = "databases"
 const ENDPOINTFETCH = "vectors/fetch"
+const ENDPOINTDELETE = "vectors/delete"
+const MAX_UPSERT_VECTORS = 1000
+const MAX_FETCH = 1000
+const MAX_TOPK = 10000
+const MAX_DIMS = 10000
+const MAX_DELETE = 1000
+
 function __init__()
     nothing
 end
@@ -84,7 +91,9 @@ result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", i
 ```
 """
 function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}())
-    println("Creating index $indexname with metric $metric replicas $replicas, shards $shards")
+    if(dimension > MAX_DIMS)
+        throw(ArgumentError("Creating index larger than max dimension size of " * string(MAX_DIMS)))
+    end
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTCREATEINDEX)
     postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards)
     if indextype !== ""
@@ -128,6 +137,9 @@ result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 ```
 """
 function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String="")
+    if(length(vectors) > MAX_UPSERT_VECTORS)
+        throw(ArgumentError("Max number of vectors per upsert is " * string(MAX_UPSERT_VECTORS)))
+    end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTUPSERT)
     body = Dict{String, Any}("vectors" => vectors)
     if namespace !== nothing && namespace != ""
@@ -144,11 +156,12 @@ end #upsert
 """
     upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, namespace::String="")
 
-upserts an array of vector ids correlated with a matrix of ``Float64``into PineconeContext and PineconeIndex with an optional namespace (Defaults to not being applied to query if not passed.)
+upserts an array of vector ids correlated with a matrix of ``Float64``into PineconeContext and PineconeIndex with an optional metadata
+and namespace (Defaults to not being applied to query if not passed.)
 On success returns a JSON blob as a String type, and nothing if it fails. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
-If the length of ids and vectors is not equal, which it must be, ``ArgumentError`` is thrown. 
-If meta is not nothing, that will be tested for length equality with ids and vectors length, with ``ArgumentError`` also thrown is not aligned on length.
+If the length of ids and vectors is not equal, which it must be, ``ArgumentError`` is thrown.
+If metadata is passed in, that will be tested for length equality with ids and vectors length, with ``ArgumentError`` also thrown is not aligned on length.
 # Example
 ```julia-repl
 julia> context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
@@ -160,6 +173,9 @@ result = Pinecone.upsert(pinecone_context, pinecone_index, ["zipA", "zipB"], [[0
 """
 function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, meta::Array{Dict{String,Any}}=Dict{String,Any}[], namespace::String="")
     numvectors = length(vectors)
+    if(numvectors > MAX_UPSERT_VECTORS)
+        throw(ArgumentError("Max number of vectors per upsert is " * string(MAX_UPSERT_VECTORS)))
+    end
     numids = length(ids)
     nummeta = (meta !== nothing ? length(meta) : 0)
     if length(ids) !== numvectors 
@@ -196,6 +212,9 @@ julia> Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
 ```
 """
 function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")
+    if(topk > MAX_TOPK)
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
+    end
     rawvectors = Vector{Vector{Float64}}()
     for i in length(queries)
         push!(rawvectors, queries[i].values)
@@ -226,6 +245,9 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ```
 """
 function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
+    if(topk > MAX_TOPK)
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
+    end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
     body = Dict{String, Any}("topK"=>topk, "include_values"=>includevalues)
     body["queries"] =  [Dict{String, Any}("values"=>row) for row in queries]
@@ -261,10 +283,33 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     if namespace == nothing
         return nothing
     end
+    if(length(ids) > MAX_FETCH)
+        throw(ArgumentError("Max number of vectors per fetch is " * string(MAX_FETCH)))
+    end
     renamedids = ["ids=$row" for row in ids] 
     urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
     response = pineconeHTTPGet(url, ctx)
+    if response == nothing
+        return nothing
+    elseif response.status == 200 || response.status == 400
+        return String(response.body)
+    end
+    nothing
+end
+
+function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String)
+    if namespace == nothing
+        return nothing
+    end
+    if(length(ids) > MAX_DELETE)
+        throw(ArgumentError("Max number of vectors per delete is " * string(MAX_DELETE)))
+    end
+    renamedids = ["ids=$row" for row in ids] 
+    urlargs = "?" * join(renamedids, "&") * "&deleteAll=" * string(deleteall) * "&namespace=$namespace"
+    url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDELETE) * urlargs
+    response = pineconeHTTPDelete(url, ctx)
+    println("\n\n\n*** DELETE response is $response")
     if response == nothing
         return nothing
     elseif response.status == 200 || response.status == 400

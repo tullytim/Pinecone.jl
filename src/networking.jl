@@ -8,7 +8,7 @@ const CONTENT_TYPE_JSON = "Content-Type: application/json"
 #return HTTP response object
 pineconeHTTPGet(url::String, ctx::Pinecone.PineconeContext) = begin
     try 
-        r = HTTP.request("GET", url,[HEADER_API_KEY=>ctx.apikey]);
+        HTTP.request("GET", url,[HEADER_API_KEY=>ctx.apikey]);
     catch e
         dumpexception(e)
     end
@@ -17,7 +17,7 @@ end
 #return parsed JSON3 obj
 pineconeHTTPGet(url::String, apikey::String) = begin
     try 
-        r = HTTP.request("GET", url,[HEADER_API_KEY=>apikey]);
+        HTTP.request("GET", url,[HEADER_API_KEY=>apikey]);
     catch e
         dumpexception(e)
     end
