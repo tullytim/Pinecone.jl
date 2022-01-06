@@ -122,8 +122,8 @@ This function returns a JSON blob as a string, or nothing if it failed. Do recom
 # Example
 ```julia-repl
 julia> testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
-context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-index = PineconeIndex(TESTINDEX)
+context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
+index = PineconeIndex("myindex")
 result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 ```
 """
@@ -140,6 +140,38 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
     end
     nothing
 end #upsert
+
+"""
+    upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, namespace::String="")
+
+upserts an array of vector ids correlated with a matrix of ``Float64``into PineconeContext and PineconeIndex with an optional namespace (Defaults to not being applied to query if not passed.)
+On success returns a JSON blob as a String type, and nothing if it fails. 
+This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
+If the length of ids and vectors is not equal, which it must be, ``ArgumentError`` is thrown. 
+If meta is not nothing, that will be tested for length equality with ids and vectors length, with ``ArgumentError`` also thrown is not aligned on length.
+# Example
+```julia-repl
+julia> context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
+index = PineconeIndex("myindex")
+meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+result = Pinecone.upsert(pinecone_context, pinecone_index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+[0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, "mynamespace")
+```
+"""
+function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, meta::Array{Dict{String,Any}}=nothing, namespace::String="")
+    numvectors = length(vectors)
+    numids = length(ids)
+    nummeta = (meta !== nothing ? length(meta) : 0)
+    if length(ids) !== numvectors 
+        throw(ArgumentError("Length of ids does not match length of vectors: $numids vs $numvectors")) 
+    end
+    if meta !== nothing && numids !== nummeta
+        throw(ArgumentError("Length of ids does not match length of metadata: $numids vs $nummeta"))
+    end
+    #pcvectors = [PineconeVector(ids[i], vectors[i], Dict{String, Any}()) for i in 1:numvectors]
+    pcvectors = [PineconeVector(ids[i], vectors[i], meta !== nothing ? meta[i] : Dict{String,Any}()) for i in 1:numvectors]
+    upsert(ctx, indexobj, pcvectors, namespace)
+end
 
 """
     query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")

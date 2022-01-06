@@ -157,6 +157,11 @@ end
       
       @test result !== nothing
       @test typeof(result) == String
+
+      meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta)
+      @test result !== nothing
+      @test typeof(result) == String
    end
 
    @testset "Large upsert()" begin
