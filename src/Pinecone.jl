@@ -298,6 +298,20 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     nothing
 end
 
+"""
+    delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String)
+
+Deletes vectors indexed by ``ids``.  **Warning:** The entire namespace for the vector will be deleted if deleteall=true
+
+Returns JSON blob as ``String`` of empty object or nothing if fails.
+# Example
+```julia-repl
+julia> context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
+index = PineconeIndex("my-index")
+Pinecone.delete(context, index, ["deleteme1", "deleteme2"], false, "timnamespace")
+{}
+```
+"""
 function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String)
     if namespace == nothing
         return nothing
@@ -309,7 +323,6 @@ function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String
     urlargs = "?" * join(renamedids, "&") * "&deleteAll=" * string(deleteall) * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDELETE) * urlargs
     response = pineconeHTTPDelete(url, ctx)
-    println("\n\n\n*** DELETE response is $response")
     if response == nothing
         return nothing
     elseif response.status == 200 || response.status == 400

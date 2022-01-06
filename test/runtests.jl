@@ -107,6 +107,38 @@ end
    end
 end
 
+@testset verbose = true "Test delete()" begin
+   ns = "deletenamespace"
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   index = PineconeIndex(TESTINDEX)
+   meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+
+
+   result = Pinecone.delete(context, index, ["zipA"], true, ns)
+   @test result !== nothing
+   @test typeof(result) == String
+
+   result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+[0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, ns)
+   @test result !== nothing
+   @test typeof(result) == String
+   
+   sleep(10)
+
+   Pinecone.delete(context, index, ["zipA"], false, ns)
+   @test result !== nothing
+   @test typeof(result) == String
+
+   result = Pinecone.fetch(context, index, ["zipB"], ns)
+   @test result !== nothing
+   @test typeof(result) == String
+   obj = JSON3.read(result)
+
+   @test haskey(obj, "vectors") == true
+   vectors = obj["vectors"]
+   @test haskey(vectors, "zipB") == true
+end
+
 @testset verbose = true "Test fetch()" begin
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    index = PineconeIndex(TESTINDEX)
