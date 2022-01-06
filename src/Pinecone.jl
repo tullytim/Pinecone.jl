@@ -43,6 +43,8 @@ function __init__()
 end
 
 """
+    init(apikey::String, environment::String)
+
 Initialize the Pinecone environment using your API Key and a specific environment.
 
 This returns a PineconeContext instance which you'll use for subsequent calls such as query() and upsert().
@@ -68,6 +70,8 @@ end #init
 
 # note no repsonse body from create, derive success from the HTTP 204
 """
+    create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}())
+
 Creates an index with a given PineconeContext, which can be accessed by a call to init(), the name of the index, and the number of dimensions.
 
 Note that there are other parameters for the distance metric, indextype, number of replicas and shards as well as the indexconfig. 
@@ -94,11 +98,14 @@ create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::
 end  #create_index
 
 """
+    Index(indexname::String)
+
 Returns a PineconeIndex type which is used for query() and upsert() of data against a specific index. 
 
 # Example
-```julia
-pineconeindex = Pinecone.Index("myindex"")
+```julia-repl
+julia> Pinecone.Index("my-index")
+PineconeIndex connected to my-index
 ```
 """
 Index(indexname::String) = begin
@@ -106,13 +113,15 @@ Index(indexname::String) = begin
 end #Index
 
 """
+    upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String="")
+
 upserts a Julia Vector of type PineconeVector using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to not being applied to query if not passed.)
 On success returns a JSON blob as a String type, and nothing if it fails. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
 # Example
-```julia
-testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
+```julia-repl
+julia> testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
 context = Pinecone.init(GOODAPIKEY, CLOUDENV)
 index = PineconeIndex(TESTINDEX)
 result = Pinecone.upsert(context, index, [testvector], "testnamespace")
@@ -133,7 +142,7 @@ upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVe
 end #upsert
 
 """
-upserts a Julia Vector of type PineconeVector using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to nothing if not passed.)
+
 On success returns a JSON blob as a String type, and nothing if it fails.
 topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
@@ -154,7 +163,8 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVec
 end
 
 """
-upserts a Julia Vector of Vector of Float64 using the given PineconeContext and PineconeIndex with an optional namespace (Defaults to nothing if not passed.)
+    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
+
 On success returns a JSON blob as a String type, and nothing if it fails.
 topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
@@ -181,12 +191,15 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
 end #query
 
 """
+    list_indexes(context::PineconeContext)
+
 Returns a JSON array listing indexes for a given account, which is indicated by the PineconeContext instance passed in.
 
 # Example
-```julia
-context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
-result = Pinecone.list_indexes(context)
+```julia-repl
+julia> context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
+Pinecone.list_indexes(context)
+["example-index", "filter-example"]
 ```
 """
 list_indexes(context::PineconeContext) = begin
@@ -196,12 +209,15 @@ list_indexes(context::PineconeContext) = begin
     end
 end
 
-""" Returns JSON blob with information about your connection to Pinecone.
+""" 
+    whoami(context::PineconeContext)
+
+Returns JSON blob with information about your connection to Pinecone.
 
 # Example
-```julia
-context = Pinecone.init("abcd-1234-zyxv", "us-west1-gcp")
-result = Pinecone.whoami(context)
+```julia-repl
+julia> context = Pinecone.init("abcd-1234-zyxv", "us-west1-gcp")
+Pinecone.whoami(context)
 ```
 """
 whoami(context::PineconeContext) = begin
@@ -212,13 +228,15 @@ whoami(context::PineconeContext) = begin
 end
 
 """
-Deletes an index
+    (ctx::PineconeContext, indexobj::PineconeIndex)
+
+Deletes an index, returns true on successful response from Pinecone backend.
 
 This delets a given Pinecone index, note that this is an asynch call and doesn't guarantee that on return that the index is actually deleted (yet).
 
 # Example
 ```julia
-result = Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
+Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
 ```
 """
 delete_index(ctx::PineconeContext, indexobj::PineconeIndex) = begin
@@ -227,6 +245,19 @@ delete_index(ctx::PineconeContext, indexobj::PineconeIndex) = begin
     response !== nothing && response.status == 204 ? true : false
 end
 
+"""
+    describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
+
+Returns JSON blob as a String type describing a particular index.  Returns ``nothing`` on failure.
+
+# Example
+```julia 
+context = Pinecone.init("abcde-1234-zyxv", "us-west1-gcp")
+index = PineconeIndex("my-index")
+Pinecone.describe_index_stats(context, index)
+"namespaces":{"test_namespace":{"vectorCount":1},"testnamespace":{"vectorCount":1},"":{"vectorCount":5}},"dimension":10}
+```
+"""
 describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex) = begin
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDESCRIBEINDEXSTATS)
     response = pineconeHTTPGet(url, ctx)
