@@ -43,12 +43,13 @@ function __init__()
 end
 
 """
-init(apikey::String, environment::String)
 Initialize the Pinecone environment using your API Key and a specific environment.
 
 This returns a PineconeContext instance which you'll use for subsequent calls such as query() and upsert().
 Your API Key and the cloud environment for your indexes are easily found in the Pinecone console.
 On failure returns nothing.
+
+# Example
 ```julia
 using Pinecone
 context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
@@ -68,10 +69,11 @@ end #init
 # note no repsonse body from create, derive success from the HTTP 204
 """
 Creates an index with a given PineconeContext, which can be accessed by a call to init(), the name of the index, and the number of dimensions.
+
 Note that there are other parameters for the distance metric, indextype, number of replicas and shards as well as the indexconfig. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
-**Example:**
+# Example
 ```julia
 context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
@@ -94,7 +96,7 @@ end  #create_index
 """
 Returns a PineconeIndex type which is used for query() and upsert() of data against a specific index. 
 
-**Example:**
+# Example
 ```julia
 pineconeindex = Pinecone.Index("myindex"")
 ```
@@ -108,7 +110,7 @@ upserts a Julia Vector of type PineconeVector using the given PineconeContext an
 On success returns a JSON blob as a String type, and nothing if it fails. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
-**Example:**
+# Example
 ```julia
 testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
 context = Pinecone.init(GOODAPIKEY, CLOUDENV)
@@ -135,7 +137,7 @@ upserts a Julia Vector of type PineconeVector using the given PineconeContext an
 On success returns a JSON blob as a String type, and nothing if it fails.
 topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
-**Example:**
+# Example
 ```julia
 testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3])
 context = Pinecone.init(GOODAPIKEY, CLOUDENV)
@@ -156,7 +158,7 @@ upserts a Julia Vector of Vector of Float64 using the given PineconeContext and 
 On success returns a JSON blob as a String type, and nothing if it fails.
 topk is an optional parameter which defaults to 10 if not specified. This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
-**Example:**
+# Example
 ```julia
 result = Pinecone.query(context, index, [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
 ```
@@ -178,7 +180,15 @@ query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Floa
     nothing
 end #query
 
+"""
+Returns a JSON array listing indexes for a given account, which is indicated by the PineconeContext instance passed in.
 
+# Example
+```julia
+context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
+result = Pinecone.list_indexes(context)
+```
+"""
 list_indexes(context::PineconeContext) = begin
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
     if response.status == 200
@@ -186,6 +196,14 @@ list_indexes(context::PineconeContext) = begin
     end
 end
 
+""" Returns JSON blob with information about your connection to Pinecone.
+
+# Example
+```julia
+context = Pinecone.init("abcd-1234-zyxv", "us-west1-gcp")
+result = Pinecone.whoami(context)
+```
+"""
 whoami(context::PineconeContext) = begin
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
     if response.status == 200
@@ -193,7 +211,16 @@ whoami(context::PineconeContext) = begin
     end
 end
 
-# We get back 204 on successful delete, otherwise 404 if index didn't exist
+"""
+Deletes an index
+
+This delets a given Pinecone index, note that this is an asynch call and doesn't guarantee that on return that the index is actually deleted (yet).
+
+# Example
+```julia
+result = Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
+```
+"""
 delete_index(ctx::PineconeContext, indexobj::PineconeIndex) = begin
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
     response = pineconeHTTPDelete(url, ctx)
