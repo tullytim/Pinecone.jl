@@ -94,18 +94,30 @@ end
       #delete in case already present from previous failure
       result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
       #sleep to wait for delete to go thru, backend takes a bit
-      sleep(60)
+      sleep(10)
       indexconfig = Dict{String, Any}("k_bits"=>512, "hybrid"=>true)
       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
       println("CREATE(): ", result)
       @test result == true
    end
    @testset "Delete" begin
-      sleep(5)
       result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
       println("DELETE(): ", result)
       @test result == true
    end
+end
+
+@testset verbose = true "Test fetch()" begin
+   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+   index = PineconeIndex(TESTINDEX)
+   testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
+   testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+   testvector2 = Pinecone.PineconeVector("testid2", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+   Pinecone.upsert(context, index, [testvector, testvector2], "testnamespace")
+   result = Pinecone.fetch(context, index, ["testid", "testid2"], "testnamespace")
+   println("**FETCH result: $result")
+   @test result !== nothing
+   @test typeof(result) == String
 end
 
 @testset verbose = true "Test query()" begin
@@ -120,9 +132,8 @@ end
    [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
    @test result !== nothing
    @test typeof(result) == String
-   #test with namespace 
+      #should get nothing here w/ this bogus namespace
    result = Pinecone.query(context, index,  
-   #should get nothing here w/ this bogus namespace
    [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4, true, "bogusempty")
    println("query() with namepsace result: $result")
    #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
@@ -131,18 +142,33 @@ end
 
 @testset verbose = true "Test upsert()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-   testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
-   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-   index = PineconeIndex(TESTINDEX)
+   @testset "Regular upsert()" begin
+      testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+      context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+      index = PineconeIndex(TESTINDEX)
 
-   result = Pinecone.upsert(context, index, [testvector], "testnamespace")
+      result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 
-   @test result !== nothing
-   @test typeof(result) == String
-   #test no namespace
+      @test result !== nothing
+      @test typeof(result) == String
+      #test no namespace
 
-   result = Pinecone.upsert(context, index, [testvector])
-   
-   @test result !== nothing
-   @test typeof(result) == String
+      result = Pinecone.upsert(context, index, [testvector])
+      
+      @test result !== nothing
+      @test typeof(result) == String
+   end
+
+   @testset "Large upsert()" begin
+      context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+      largeindex = PineconeIndex("testlargeindex")
+      testrows= Vector{PineconeVector}()
+      for i in 1:1000
+         testvector = Pinecone.PineconeVector("testid_$i", rand(Float64, 10), testdict)
+         push!(testrows, testvector)
+      end      
+      result = Pinecone.upsert(context, largeindex, testrows, "testnamespace")
+      @test result !== nothing
+      @test typeof(result) == String
+   end
 end

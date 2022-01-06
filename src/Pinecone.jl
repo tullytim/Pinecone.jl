@@ -57,7 +57,7 @@ using Pinecone
 context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 ```
 """
-init(apikey::String, environment::String) = begin
+function init(apikey::String, environment::String)
     response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), apikey)
     if response == nothing
         return nothing
@@ -83,7 +83,7 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
 ```
 """
-create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}()) = begin
+function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}())
     println("Creating index $indexname with metric $metric replicas $replicas, shards $shards")
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTCREATEINDEX)
     postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards)
@@ -108,7 +108,7 @@ julia> Pinecone.Index("my-index")
 PineconeIndex connected to my-index
 ```
 """
-Index(indexname::String) = begin
+function Index(indexname::String)
     PineconeIndex(indexname);
 end #Index
 
@@ -127,7 +127,7 @@ index = PineconeIndex(TESTINDEX)
 result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 ```
 """
-upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String="") = begin
+function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{PineconeVector}, namespace::String="")
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTUPSERT)
     body = Dict{String, Any}("vectors" => vectors)
     if namespace !== nothing && namespace != ""
@@ -164,7 +164,7 @@ julia> Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
 ],\"namespace\":\"\"}]}"
 ```
 """
-query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="") = begin
+function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")
     rawvectors = Vector{Vector{Float64}}()
     for i in length(queries)
         push!(rawvectors, queries[i].values)
@@ -194,7 +194,7 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ],\"namespace\":\"\"}]}"
 ```
 """
-query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) = begin
+function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
     body = Dict{String, Any}("topK"=>topk, "include_values"=>includevalues)
     body["queries"] =  [Dict{String, Any}("values"=>row) for row in queries]
@@ -216,6 +216,7 @@ end #query
 
 Fetches vectors based on the vector ids for each vector, provided as the ``ids`` array for a given namespace.  Note that namespace is mandatory here.
 
+Returns JSON blob as ``String`` show below, or ``nothing`` on failure.
 # Example
 ```julia-repl
 julia> context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
@@ -253,7 +254,7 @@ Pinecone.list_indexes(context)
 ["example-index", "filter-example"]
 ```
 """
-list_indexes(context::PineconeContext) = begin
+function list_indexes(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
     if response.status == 200
         return String(response.body)
@@ -271,7 +272,7 @@ julia> context = Pinecone.init("abcd-1234-zyxv", "us-west1-gcp")
 Pinecone.whoami(context)
 ```
 """
-whoami(context::PineconeContext) = begin
+function whoami(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
     if response.status == 200
         return String(response.body)
@@ -290,7 +291,7 @@ This delets a given Pinecone index, note that this is an asynch call and doesn't
 Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
 ```
 """
-delete_index(ctx::PineconeContext, indexobj::PineconeIndex) = begin
+function delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
     response = pineconeHTTPDelete(url, ctx)
     response !== nothing && response.status == 204 ? true : false
@@ -309,7 +310,7 @@ Pinecone.describe_index_stats(context, index)
 "namespaces":{"test_namespace":{"vectorCount":1},"testnamespace":{"vectorCount":1},"":{"vectorCount":5}},"dimension":10}
 ```
 """
-describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex) = begin
+function describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDESCRIBEINDEXSTATS)
     response = pineconeHTTPGet(url, ctx)
     if response.status == 200
