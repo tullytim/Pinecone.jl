@@ -7,9 +7,9 @@ on:
     tags: '*'
   pull_request:
 jobs:
-  test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
-    runs-on: ${{matrix.os}}
+  ubuntu:
+    name: Julia ${{ matrix.version }} - ubuntu
+    runs-on: ubuntu-latest
     env:
       PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
     strategy:
@@ -20,6 +20,32 @@ jobs:
           - ubuntu-latest
 #         - macOS-latest
 #         - windows-latest
+        arch:
+          - x64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@latest
+      - uses: julia-actions/julia-uploadcodecov@latest
+        env:
+         CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
+      - uses: codecov/codecov-action@v2
+  mac:
+    name: Julia ${{ matrix.version }} - mac
+    needs: ubuntu
+    runs-on: macos-latest
+    env:
+      PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
+    strategy:
+      matrix:
+        version:
+          - '1.6'
+        os:
+          - macOS-latest
         arch:
           - x64
     steps:
