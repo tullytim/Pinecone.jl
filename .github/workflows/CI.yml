@@ -6,20 +6,18 @@ on:
       - main 
     tags: '*'
   pull_request:
+env:
+  PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
 jobs:
   ubuntu:
     name: Julia ${{ matrix.version }} - ubuntu
     runs-on: ubuntu-latest
-    env:
-      PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
     strategy:
       matrix:
         version:
           - '1.6'
         os:
           - ubuntu-latest
-#         - macOS-latest
-#         - windows-latest
         arch:
           - x64
     steps:
@@ -38,8 +36,6 @@ jobs:
     name: Julia ${{ matrix.version }} - mac
     needs: ubuntu
     runs-on: macos-latest
-    env:
-      PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
     strategy:
       matrix:
         version:
@@ -60,3 +56,27 @@ jobs:
         env:
          CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
       - uses: codecov/codecov-action@v2
+  windows:
+      name: Julia ${{ matrix.version }} - windows
+      needs: [ubuntu,mac]
+      runs-on: windows-latest
+      strategy:
+        matrix:
+          version:
+            - '1.6'
+          os:
+            - windowsos-latest
+          arch:
+            - x64
+      steps:
+        - uses: actions/checkout@v2
+        - uses: julia-actions/setup-julia@latest
+          with:
+            version: ${{ matrix.version }}
+            arch: ${{ matrix.arch }}
+        - uses: julia-actions/julia-buildpkg@v1
+        - uses: julia-actions/julia-runtest@latest
+        - uses: julia-actions/julia-uploadcodecov@latest
+          env:
+            CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
+        - uses: codecov/codecov-action@v2
