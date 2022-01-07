@@ -42,6 +42,8 @@ const ENDPOINTDELETE = "vectors/delete"
 const MAX_UPSERT_VECTORS = 1000
 const MAX_FETCH = 1000
 const MAX_TOPK = 10000
+const MAX_TOPK_WITH_META = 1000
+const MAX_TOPK_WITH_DATA = 1000
 const MAX_DIMS = 10000
 const MAX_DELETE = 1000
 
@@ -66,9 +68,7 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 """
 function init(apikey::String, environment::String)
     response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), apikey)
-    if response == nothing
-        return nothing
-    elseif response.status == 200
+    if response != nothing && response.status == 200
         rvdict = pineconeGetDict(String(response.body))
         return PineconeContext(apikey, environment, rvdict["project_name"])
     end
@@ -147,7 +147,7 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
     end
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
-    if response.status == 200
+    if response != nothing && response.status == 200
         return String(response.body)
     end
     nothing
@@ -215,6 +215,9 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Pi
     if(topk > MAX_TOPK)
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
     end
+    if includevalues == true && topk > MAX_TOPK_WITH_DATA
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including data in results"))
+    end
     rawvectors = Vector{Vector{Float64}}()
     for i in length(queries)
         push!(rawvectors, queries[i].values)
@@ -245,8 +248,11 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ```
 """
 function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
-    if(topk > MAX_TOPK)
+    if topk > MAX_TOPK
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
+    end
+    if includevalues == true && topk > MAX_TOPK_WITH_DATA
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including data in results"))
     end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
     body = Dict{String, Any}("topK"=>topk, "include_values"=>includevalues)
@@ -256,9 +262,7 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
     end
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
-    if response == nothing
-        return nothing
-    elseif response.status == 200 || response.status == 400
+    if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
     end
     nothing
@@ -290,9 +294,7 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
     response = pineconeHTTPGet(url, ctx)
-    if response == nothing
-        return nothing
-    elseif response.status == 200 || response.status == 400
+    if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
     end
     nothing
@@ -323,9 +325,7 @@ function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String
     urlargs = "?" * join(renamedids, "&") * "&deleteAll=" * string(deleteall) * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDELETE) * urlargs
     response = pineconeHTTPDelete(url, ctx)
-    if response == nothing
-        return nothing
-    elseif response.status == 200 || response.status == 400
+    if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
     end
     nothing
@@ -345,9 +345,10 @@ Pinecone.list_indexes(context)
 """
 function list_indexes(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
-    if response.status == 200
+    if response != nothing && response.status == 200
         return String(response.body)
     end
+    nothing
 end
 
 """ 
@@ -363,13 +364,14 @@ Pinecone.whoami(context)
 """
 function whoami(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
-    if response.status == 200
+    if response != nothing && response.status == 200
         return String(response.body)
     end
+    nothing
 end
 
 """
-    (ctx::PineconeContext, indexobj::PineconeIndex)
+    delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
 
 Deletes an index, returns true on successful response from Pinecone backend.
 
@@ -402,9 +404,10 @@ Pinecone.describe_index_stats(context, index)
 function describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDESCRIBEINDEXSTATS)
     response = pineconeHTTPGet(url, ctx)
-    if response.status == 200
+    if response != nothing && response.status == 200
         return String(response.body)
     end
+    nothing
 end
 
 end # module

@@ -99,6 +99,9 @@ end
       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
       println("CREATE(): ", result)
       @test result == true
+
+      #max dims is 10000, check you cannot create 10001
+      @test_throws ArgumentError Pinecone.create_index(context, testindexname, 10001)
    end
    @testset "Delete" begin
       result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
@@ -170,6 +173,12 @@ end
    println("query() with namepsace result: $result")
    #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
    @test result == nothing
+
+   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000)
+   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000, true)
+   result = Pinecone.query(context, index, [testvector], 1000, true)
+   @test result != nothing
+   @test typeof(result) == String
 end
 
 @testset verbose = true "Test upsert()" begin
