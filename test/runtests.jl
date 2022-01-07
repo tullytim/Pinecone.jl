@@ -121,19 +121,14 @@ end
 
    # first clean up everything in our namespace
    result = Pinecone.delete(context, index, ["zipA", "zipB"], true, ns)
-   @test result !== nothing
-   @test typeof(result) == String
 
    #insert some dummy data to be deleted and then sleep to wait for any indexing
    result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, ns)
    @test result !== nothing
    @test typeof(result) == String
-   println("\n\n\n UPSERT RESULT was $result")
    sleep(10)
 
    result = Pinecone.fetch(context, index, ["zipA", "zipB"], ns)
-   println("\n\n\n SEE WHAT WE HAVE $result")
-
 
    #delete zipA and test to see if zipB still there
    Pinecone.delete(context, index, ["zipA"], false, ns)
@@ -162,7 +157,6 @@ end
    result = Pinecone.fetch(context, index, ["zipA", "zipB"])
    @test result !== nothing
    @test typeof(result) == String
-   println("\n\n\n SEE WHAT WE HAVE with no NS: $result")
 end
 
 @testset verbose = true "Test fetch()" begin
@@ -173,12 +167,10 @@ end
    testvector2 = Pinecone.PineconeVector("testid2", v1, testdict)
    Pinecone.upsert(context, index, [testvector, testvector2], "testnamespace")
    result = Pinecone.fetch(context, index, ["testid", "testid2"], "testnamespace")
-   println("**FETCH result: $result")
    @test result !== nothing
    @test typeof(result) == String
 
    result = Pinecone.fetch(context, index, ["testid", "testid2"])
-   println("**FETCH result: $result")
    @test result !== nothing
    @test typeof(result) == String
 
@@ -220,7 +212,7 @@ end
    @test result != nothing
    @test typeof(result) == String
 end
-#=
+
 @testset verbose = true "Test upsert()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
@@ -278,4 +270,3 @@ end
       @test typeof(result) == String
    end
 end
-=#
