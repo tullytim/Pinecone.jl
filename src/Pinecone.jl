@@ -288,7 +288,7 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
         throw(ArgumentError("Max number of vectors per fetch is " * string(MAX_FETCH)))
     end
     renamedids = ["ids=$row" for row in ids] 
-    urlargs = "?" * join(renamedids, "&") * (namespace != "" ? "&namespace=$namespace" : "")
+    urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
     response = pineconeHTTPGet(url, ctx)
     if response != nothing && (response.status == 200 || response.status == 400)
@@ -311,10 +311,7 @@ Pinecone.delete(context, index, ["deleteme1", "deleteme2"], false, "timnamespace
 {}
 ```
 """
-function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String)
-    if namespace == nothing
-        return nothing
-    end
+function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String="")
     if(length(ids) > MAX_DELETE)
         throw(ArgumentError("Max number of vectors per delete is " * string(MAX_DELETE)))
     end

@@ -119,16 +119,23 @@ end
    index = PineconeIndex(TESTINDEX)
    meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
 
-   result = Pinecone.delete(context, index, ["zipA"], true, ns)
+   # first clean up everything in our namespace
+   result = Pinecone.delete(context, index, ["zipA", "zipB"], true, ns)
    @test result !== nothing
    @test typeof(result) == String
 
+   #insert some dummy data to be deleted and then sleep to wait for any indexing
    result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, ns)
    @test result !== nothing
    @test typeof(result) == String
-   
+   println("\n\n\n UPSERT RESULT was $result")
    sleep(10)
 
+   result = Pinecone.fetch(context, index, ["zipA", "zipB"], ns)
+   println("\n\n\n SEE WHAT WE HAVE $result")
+
+
+   #delete zipA and test to see if zipB still there
    Pinecone.delete(context, index, ["zipA"], false, ns)
    @test result !== nothing
    @test typeof(result) == String
@@ -137,10 +144,25 @@ end
    @test result !== nothing
    @test typeof(result) == String
    obj = JSON3.read(result)
-
+   #make sure zipB still there
    @test haskey(obj, "vectors") == true
    vectors = obj["vectors"]
    @test haskey(vectors, "zipB") == true
+
+   # first clean up everything in our namespace
+   result = Pinecone.delete(context, index, ["zipA", "zipB"], true, ns)
+   @test result !== nothing
+   @test typeof(result) == String
+
+   #reinsert with no namespace
+   #insert and test same steps w/ empty namespace
+   result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta)
+   @test result !== nothing
+   @test typeof(result) == String
+   result = Pinecone.fetch(context, index, ["zipA", "zipB"])
+   @test result !== nothing
+   @test typeof(result) == String
+   println("\n\n\n SEE WHAT WE HAVE with no NS: $result")
 end
 
 @testset verbose = true "Test fetch()" begin
@@ -159,6 +181,9 @@ end
    println("**FETCH result: $result")
    @test result !== nothing
    @test typeof(result) == String
+
+   #test exceeded max ids
+   @test_throws ArgumentError Pinecone.fetch(context, index, ["testid" for i in 1:1001])
 end
 
 @testset verbose = true "Test query()" begin
@@ -173,30 +198,38 @@ end
    @test result !== nothing
    @test typeof(result) == String
       #should get nothing here w/ this bogus namespace
-   result = Pinecone.query(context, index,  
-   [v1, v1], 4, true, "bogusempty")
-   println("query() with namepsace result: $result")
+   result = Pinecone.query(context, index, [v1, v1], 4, true, "bogusempty")
    #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
    @test result == nothing
 
+   # test topk exceeded
+   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10001)
+   # test topk exceeded when values included in return results
    @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000)
+   # test topk exceeded when values included in return results with includesvalues=true
    @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000, true)
+
+   # test topk exceeded with alternate query form
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001)
+   # test topk exceeded when values included in return results
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000)
+   # test topk exceeded when values included in return results with includesvalues=true
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000, true)
+
    result = Pinecone.query(context, index, [testvector], 1000, true)
    @test result != nothing
    @test typeof(result) == String
 end
-
+#=
 @testset verbose = true "Test upsert()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    index = PineconeIndex(TESTINDEX)
    meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+   testvector = Pinecone.PineconeVector("testid", v1, testdict)
 
    @testset "Regular upsert()" begin
-      testvector = Pinecone.PineconeVector("testid", v1, testdict)
-
       result = Pinecone.upsert(context, index, [testvector], "testnamespace")
-
       @test result !== nothing
       @test typeof(result) == String
       #test no namespace
@@ -213,6 +246,9 @@ end
       @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], [Dict{String,Any}("foo"=>"bar")])
       # test too many vectors on insert
       @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [rand(Float64,10) for i in 1:1001])
+      largevec = [testvector for i in 1:1001]
+      @test_throws ArgumentError Pinecone.upsert(context, index, largevec)
+      @test_throws ArgumentError Pinecone.upsert(context, index, largevec, "ns")
    end
 
    @testset "Upsert with zipped vectors and ids" begin
@@ -242,3 +278,4 @@ end
       @test typeof(result) == String
    end
 end
+=#
