@@ -272,7 +272,7 @@ end #query
     fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, namespace::String)
 
 Fetches vectors based on the vector ids for each vector, provided as the ``ids`` array for a given namespace.  .
-
+Note that namespace is optional, and if not provided defaults to not using it to filter query results by namespace.
 Returns JSON blob as ``String`` show below, or ``nothing`` on failure.
 # Example
 ```julia-repl

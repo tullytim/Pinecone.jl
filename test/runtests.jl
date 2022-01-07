@@ -6,6 +6,9 @@ GOODAPIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
 TESTINDEX = "filter-example"
 
+v1 = [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3]
+v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+
 @testset "PineconeIndex Type Tests" begin
    pineconeindex = PineconeIndex(TESTINDEX)
    @test typeof(pineconeindex) == PineconeIndex
@@ -116,13 +119,11 @@ end
    index = PineconeIndex(TESTINDEX)
    meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
 
-
    result = Pinecone.delete(context, index, ["zipA"], true, ns)
    @test result !== nothing
    @test typeof(result) == String
 
-   result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
-[0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, ns)
+   result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, ns)
    @test result !== nothing
    @test typeof(result) == String
    
@@ -146,8 +147,8 @@ end
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    index = PineconeIndex(TESTINDEX)
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-   testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
-   testvector2 = Pinecone.PineconeVector("testid2", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+   testvector = Pinecone.PineconeVector("testid", v1, testdict)
+   testvector2 = Pinecone.PineconeVector("testid2", v1, testdict)
    Pinecone.upsert(context, index, [testvector, testvector2], "testnamespace")
    result = Pinecone.fetch(context, index, ["testid", "testid2"], "testnamespace")
    println("**FETCH result: $result")
@@ -162,19 +163,18 @@ end
 
 @testset verbose = true "Test query()" begin
    testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-   testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+   testvector = Pinecone.PineconeVector("testid", v1, testdict)
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    index = PineconeIndex(TESTINDEX)
    result = Pinecone.query(context, index, [testvector], 4)
    @test result !== nothing
    @test typeof(result) == String
-   result = Pinecone.query(context, index,  
-   [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4)
+   result = Pinecone.query(context, index, [v1, v1], 4)
    @test result !== nothing
    @test typeof(result) == String
       #should get nothing here w/ this bogus namespace
    result = Pinecone.query(context, index,  
-   [[0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], 4, true, "bogusempty")
+   [v1, v1], 4, true, "bogusempty")
    println("query() with namepsace result: $result")
    #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
    @test result == nothing
@@ -193,7 +193,7 @@ end
    meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
 
    @testset "Regular upsert()" begin
-      testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
+      testvector = Pinecone.PineconeVector("testid", v1, testdict)
 
       result = Pinecone.upsert(context, index, [testvector], "testnamespace")
 
@@ -208,22 +208,23 @@ end
    end
    @testset "Upsert with invalid args (ArgumentError)" begin
       #test Arg checking exceptions
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]])
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]])
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]],
-      [Dict{String,Any}("foo"=>"bar")] )
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA"], [v1, v2])
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v2])
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], [Dict{String,Any}("foo"=>"bar")])
+      # test too many vectors on insert
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [rand(Float64,10) for i in 1:1001])
    end
 
    @testset "Upsert with zipped vectors and ids" begin
-      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]])
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2])
       @test result !== nothing
       @test typeof(result) == String
 
-      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta)
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta)
       @test result !== nothing
       @test typeof(result) == String
 
-      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, "mynamespace")
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, "mynamespace")
       @test result !== nothing
       @test typeof(result) == String
    end

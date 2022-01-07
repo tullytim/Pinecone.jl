@@ -8,6 +8,7 @@ on:
   pull_request:
 env:
   PINECONE_API_KEY: ${{ secrets.PINECONEAPIKEY }}
+  CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
 jobs:
   ubuntu:
     name: Julia ${{ matrix.version }} - ubuntu
@@ -29,8 +30,6 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-uploadcodecov@latest
-        env:
-         CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
       - uses: codecov/codecov-action@v2
   mac:
     name: Julia ${{ matrix.version }} - mac
@@ -53,8 +52,6 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-uploadcodecov@latest
-        env:
-         CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
       - uses: codecov/codecov-action@v2
   windows:
       name: Julia ${{ matrix.version }} - windows
@@ -77,6 +74,4 @@ jobs:
         - uses: julia-actions/julia-buildpkg@v1
         - uses: julia-actions/julia-runtest@latest
         - uses: julia-actions/julia-uploadcodecov@latest
-          env:
-            CODECOV_TOKEN: ${{ secrets.CODECOVAPIKEY }}
         - uses: codecov/codecov-action@v2
