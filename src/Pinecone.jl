@@ -271,7 +271,7 @@ end #query
 """
     fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, namespace::String)
 
-Fetches vectors based on the vector ids for each vector, provided as the ``ids`` array for a given namespace.  Note that namespace is mandatory here.
+Fetches vectors based on the vector ids for each vector, provided as the ``ids`` array for a given namespace.  .
 
 Returns JSON blob as ``String`` show below, or ``nothing`` on failure.
 # Example
@@ -283,15 +283,12 @@ Pinecone.fetch(context, index, ["testid", "testid2"], "testnamespace")
 "testid2":{"id":"testid2","values":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3],"metadata":{"genre":"documentary","year":2019}}},"namespace":"testnamespace"}
 ```
 """
-function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, namespace::String)
-    if namespace == nothing
-        return nothing
-    end
+function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, namespace::String="")
     if(length(ids) > MAX_FETCH)
         throw(ArgumentError("Max number of vectors per fetch is " * string(MAX_FETCH)))
     end
     renamedids = ["ids=$row" for row in ids] 
-    urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
+    urlargs = "?" * join(renamedids, "&") * (namespace != "" ? "&namespace=$namespace" : "")
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
     response = pineconeHTTPGet(url, ctx)
     if response != nothing && (response.status == 200 || response.status == 400)

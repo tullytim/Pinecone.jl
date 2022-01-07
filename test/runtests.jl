@@ -153,6 +153,11 @@ end
    println("**FETCH result: $result")
    @test result !== nothing
    @test typeof(result) == String
+
+   result = Pinecone.fetch(context, index, ["testid", "testid2"])
+   println("**FETCH result: $result")
+   @test result !== nothing
+   @test typeof(result) == String
 end
 
 @testset verbose = true "Test query()" begin
