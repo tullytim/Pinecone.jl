@@ -157,6 +157,8 @@ end
    result = Pinecone.fetch(context, index, ["zipA", "zipB"])
    @test result !== nothing
    @test typeof(result) == String
+
+   @test_throws ArgumentError Pinecone.delete(context, index, ["testid" for i in 1:1001], true, ns)
 end
 
 @testset verbose = true "Test fetch()" begin

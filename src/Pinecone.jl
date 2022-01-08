@@ -24,7 +24,7 @@ struct PineconeVector
     values::Array{Float64}
     metadata::Dict{String, Any}
 end
-Base.show(io::IO, vec::PineconeVector) = print(io, "PineconeVector is id: ", vec.id, " values: ", vec.values, "meta: ", vec.metadata)
+Base.show(io::IO, vec::PineconeVector) = print(io, "PineconeVector is id: ", vec.id, " values: ", vec.values, " meta: ", vec.metadata)
 # Make PineconeVector type JSON3 writable per https://quinnj.github.io/JSON3.jl/stable/#Read-JSON-into-a-type
 StructTypes.StructType(::Type{PineconeVector}) = StructTypes.UnorderedStruct()
 
@@ -72,7 +72,6 @@ function init(apikey::String, environment::String)
         rvdict = pineconeGetDict(String(response.body))
         return PineconeContext(apikey, environment, rvdict["project_name"])
     end
-    nothing
 end #init
 
 # note no repsonse body from create, derive success from the HTTP 204
@@ -150,7 +149,6 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
     if response != nothing && response.status == 200
         return String(response.body)
     end
-    nothing
 end #upsert
 
 """
@@ -265,7 +263,6 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
     end
-    nothing
 end #query
 
 """
@@ -294,7 +291,6 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
     end
-    nothing
 end
 
 """
@@ -322,7 +318,6 @@ function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
     end
-    nothing
 end
 
 """
@@ -342,7 +337,6 @@ function list_indexes(context::PineconeContext)
     if response != nothing && response.status == 200
         return String(response.body)
     end
-    nothing
 end
 
 """ 
@@ -361,7 +355,6 @@ function whoami(context::PineconeContext)
     if response != nothing && response.status == 200
         return String(response.body)
     end
-    nothing
 end
 
 """
@@ -401,7 +394,6 @@ function describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
     if response != nothing && response.status == 200
         return String(response.body)
     end
-    nothing
 end
 
 end # module
