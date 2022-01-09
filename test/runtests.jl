@@ -280,4 +280,13 @@ end
       @test result !== nothing
       @test typeof(result) == String
    end
+
+   @testset "Scale Index()" begin
+      context = Pinecone.init(GOODAPIKEY, CLOUDENV)
+      index = PineconeIndex(TESTINDEX)
+      @test_throws ArgumentError Pinecone.scale_index(context, index, -1)
+      result = Pinecone.scale_index(context, index, 2)
+      @test result !== nothing
+      @test result == true
+   end
 end

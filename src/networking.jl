@@ -41,6 +41,15 @@ pineconeHTTPDelete(url::String, ctx::Pinecone.PineconeContext) = begin
     end
 end
 
+pineconeHTTPPatch(url::String, ctx::Pinecone.PineconeContext, postbody::String="") = begin
+    headers = Dict{String, Any}(HEADER_API_KEY=>ctx.apikey, HEADER_CONTENT_TYPE=>CONTENT_TYPE_JSON);
+    try
+        HTTP.request("PATCH", url, headers, postbody);
+    catch e
+        dumpexception(e)
+    end
+end
+
 pineconeGetDict(jsonstring::String) = begin
     JSON3.read(jsonstring)
 end

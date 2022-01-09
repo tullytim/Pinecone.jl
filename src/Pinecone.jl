@@ -39,6 +39,7 @@ const ENDPOINTUPSERT = "vectors/upsert"
 const ENDPOINTCREATEINDEX = "databases"
 const ENDPOINTFETCH = "vectors/fetch"
 const ENDPOINTDELETE = "vectors/delete"
+const ENDPOINTSCALEINDEX = "databases"
 const MAX_UPSERT_VECTORS = 1000
 const MAX_FETCH = 1000
 const MAX_TOPK = 10000
@@ -392,5 +393,18 @@ function describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
         return String(response.body)
     end
 end
+
+function scale_index(ctx::PineconeContext, indexobj::PineconeIndex, replicas::Int64)
+    if replicas < 0
+        throw(ArgumentError("Number of replicas should be greater than 0"))
+    end
+    postbody = Dict{String, Any}("replicas"=>replicas)
+    url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTSCALEINDEX) * "/" * indexobj.indexname
+    response = pineconeHTTPPatch(url, ctx, JSON3.write(postbody))
+    # we get back 204, docs say 200 but they're wrong
+    # https://www.pinecone.io/docs/api/operation/scale_index/
+    response != nothing && (response.status == 200 || response.status == 204) ? true : false
+end
+
 
 end # module
