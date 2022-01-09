@@ -21,7 +21,7 @@ Base.show(io::IO, index::PineconeIndex) = print(io, "PineconeIndex connected to 
 
 struct PineconeVector
     id::String
-    values::Array{Float64}
+    values::Array{<:AbstractFloat}
     metadata::Dict{String, Any}
 end
 Base.show(io::IO, vec::PineconeVector) = print(io, "PineconeVector is id: ", vec.id, " values: ", vec.values, " meta: ", vec.metadata)
@@ -145,6 +145,7 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
         body["namespace"] = namespace
     end
     postbody = JSON3.write(body)
+    println("POST: $postbody")
     response = pineconeHTTPPost(url, ctx, postbody)
     if response != nothing && response.status == 200
         return String(response.body)
@@ -152,9 +153,9 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
 end #upsert
 
 """
-    upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, namespace::String="")
+    upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{T}}, meta::Array{Dict{String,Any}}=Dict{String,Any}[], namespace::String="") where {T<:AbstractFloat}
 
-upserts an array of vector ids correlated with a matrix of ``Float64``into PineconeContext and PineconeIndex with an optional metadata
+upserts an array of vectors into PineconeContext and PineconeIndex with an optional metadata
 and namespace (Defaults to not being applied to query if not passed.)
 On success returns a JSON blob as a String type, and nothing if it fails. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
@@ -169,7 +170,8 @@ result = Pinecone.upsert(pinecone_context, pinecone_index, ["zipA", "zipB"], [[0
 [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, "mynamespace")
 ```
 """
-function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{Float64}}, meta::Array{Dict{String,Any}}=Dict{String,Any}[], namespace::String="")
+function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{T}},
+    meta::Array{Dict{String,Any}}=Dict{String,Any}[], namespace::String="") where {T<:AbstractFloat}
     numvectors = length(vectors)
     if(numvectors > MAX_UPSERT_VECTORS)
         throw(ArgumentError("Max number of vectors per upsert is " * string(MAX_UPSERT_VECTORS)))
@@ -190,7 +192,7 @@ end
     query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")
 
 Query an index using the given context that match ``queries`` passed in.  The ``PineconeVector`` that is queries is a simple ``PineconeVector`` as described above.
-Note there is an another version of ``query()`` that takes in a ``Vector{Vector{Float64}}`` for the ``queries`` parameter.  Functionally equivalent.
+Note there is an another version of ``query()`` that takes in a ``Vector{Vector{<:AbstractFloat}}`` for the ``queries`` parameter.  Functionally equivalent.
 Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
 
 topk is an optional parameter which defaults to 10 if not specified.  Do recommend using JSON3 to parse the blob.
@@ -209,22 +211,13 @@ julia> Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
 ],\"namespace\":\"\"}]}"
 ```
 """
-function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")
-    if(topk > MAX_TOPK)
-        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
-    end
-    if includevalues == true && topk > MAX_TOPK_WITH_DATA
-        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including data in results"))
-    end
-    rawvectors = Vector{Vector{Float64}}()
-    for i in length(queries)
-        push!(rawvectors, queries[i].values)
-    end
-    query(ctx, indexobj, rawvectors, topk, includevalues, namespace)
+function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false)
+    rawvectors = [queries[i].values for i in 1:length(queries)]
+    query(ctx, indexobj, rawvectors, topk, namespace, includevalues, includemeta)
 end
 
 """
-    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
+    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) where {T<:AbstractFloat}
 
 Query an index using the given context that match ``queries`` passed in. Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
 Note there is an alternate form for ``query()`` that takes in a ``Vector{PineconeVector}`` instead.  Functionally equivalent.
@@ -245,20 +238,25 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ],\"namespace\":\"\"}]}"
 ```
 """
-function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{Float64}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing)
+function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, 
+        includemeta::Bool=false) where {T<:AbstractFloat}
     if topk > MAX_TOPK
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
     end
     if includevalues == true && topk > MAX_TOPK_WITH_DATA
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including data in results"))
     end
+    if includemeta == true && topk > MAX_TOPK_WITH_META
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including meatadata in results"))
+    end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
-    body = Dict{String, Any}("topK"=>topk, "include_values"=>includevalues)
-    body["queries"] =  [Dict{String, Any}("values"=>row) for row in queries]
-    if namespace !== nothing
-        body["namespace"] = namespace
+    body = Dict{String, Any}("topK"=>topk, "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
+    body["queries"] =  []
+    for vec in queries
+        push!(body["queries"], Dict{String, Any}("values"=>vec))
     end
     postbody = JSON3.write(body)
+    println("QUERY POST: $postbody")
     response = pineconeHTTPPost(url, ctx, postbody)
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)

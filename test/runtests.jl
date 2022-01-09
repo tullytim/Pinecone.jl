@@ -40,7 +40,6 @@ end
    @test typeof(pineconevector) == PineconeVector
    @test pineconevector.id == VID
    @test length(pineconevector.values) == 4
-   @test typeof(pineconevector.values) == Vector{Float64}
    @test length(pineconevector.metadata) == 3
    @test typeof(pineconevector.metadata) == Dict{String,Any}
    #testing print out for codecov
@@ -192,25 +191,29 @@ end
    @test result !== nothing
    @test typeof(result) == String
       #should get nothing here w/ this bogus namespace
-   result = Pinecone.query(context, index, [v1, v1], 4, true, "bogusempty")
+   result = Pinecone.query(context, index, [v1, v1], 4, "bogusempty", true)
    #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
    @test result == nothing
 
+   println("***************** Test query() topK *****************")
    # test topk exceeded
    @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10001)
-   # test topk exceeded when values included in return results
-   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000)
-   # test topk exceeded when values included in return results with includesvalues=true
-   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000, true)
 
+   println("***************** Test query() topk exceeded include results*************")
+   # test topk exceeded when values included in return results
+   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000, "", true)
+   
    # test topk exceeded with alternate query form
    @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001)
    # test topk exceeded when values included in return results
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000)
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000, "", true)
    # test topk exceeded when values included in return results with includesvalues=true
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000, true)
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true)
+   # test topk exceeded when values included in return results with includesmeta=true
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true, true)
+   result = Pinecone.query(context, index, [testvector], 1000, "", true)
 
-   result = Pinecone.query(context, index, [testvector], 1000, true)
+   #TODO - Test meta data and exceeded metadata results (topk)
    @test result != nothing
    @test typeof(result) == String
 end
@@ -239,7 +242,7 @@ end
       @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v2])
       @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], [Dict{String,Any}("foo"=>"bar")])
       # test too many vectors on insert
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [rand(Float64,10) for i in 1:1001])
+      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [rand(Float32,10) for i in 1:1001])
       largevec = [testvector for i in 1:1001]
       @test_throws ArgumentError Pinecone.upsert(context, index, largevec)
       @test_throws ArgumentError Pinecone.upsert(context, index, largevec, "ns")
@@ -264,7 +267,7 @@ end
       largeindex = PineconeIndex("testlargeindex")
       testrows= Vector{PineconeVector}()
       for i in 1:1000
-         testvector = Pinecone.PineconeVector("testid_$i", rand(Float64, 10), testdict)
+         testvector = Pinecone.PineconeVector("testid_$i", rand(Float32, 10), testdict)
          push!(testrows, testvector)
       end      
       result = Pinecone.upsert(context, largeindex, testrows, "testnamespace")
