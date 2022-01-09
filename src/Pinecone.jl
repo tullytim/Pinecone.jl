@@ -189,7 +189,7 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String
 end
 
 """
-    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, includevalues::Bool=true, namespace::String="")
+    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false)
 
 Query an index using the given context that match ``queries`` passed in.  The ``PineconeVector`` that is queries is a simple ``PineconeVector`` as described above.
 Note there is an another version of ``query()`` that takes in a ``Vector{Vector{<:AbstractFloat}}`` for the ``queries`` parameter.  Functionally equivalent.
@@ -217,12 +217,11 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Pi
 end
 
 """
-    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, includevalues::Bool=true, namespace=nothing) where {T<:AbstractFloat}
+    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false) where {T<:AbstractFloat}
 
 Query an index using the given context that match ``queries`` passed in. Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
 Note there is an alternate form for ``query()`` that takes in a ``Vector{PineconeVector}`` instead.  Functionally equivalent.
 topk is an optional parameter which defaults to 10 if not specified.  Do recommend using JSON3 to parse the blob.
-
 
 # Example
 ```julia-repl
@@ -247,7 +246,7 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including data in results"))
     end
     if includemeta == true && topk > MAX_TOPK_WITH_META
-        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including meatadata in results"))
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_META) * " when including meatadata in results"))
     end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
     body = Dict{String, Any}("topK"=>topk, "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)

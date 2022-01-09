@@ -208,12 +208,18 @@ end
    # test topk exceeded when values included in return results
    @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000, "", true)
    # test topk exceeded when values included in return results with includesvalues=true
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true)
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true, false)
    # test topk exceeded when values included in return results with includesmeta=true
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true, true)
-   result = Pinecone.query(context, index, [testvector], 1000, "", true)
+   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", false, true)
 
-   #TODO - Test meta data and exceeded metadata results (topk)
+
+   result = Pinecone.query(context, index, [testvector], 1000, "", true)
+   @test result != nothing
+   @test typeof(result) == String
+   result = Pinecone.query(context, index, [testvector], 1000, "", true, false)
+   @test result != nothing
+   @test typeof(result) == String
+   result = Pinecone.query(context, index, [testvector], 1000, "", false, true)
    @test result != nothing
    @test typeof(result) == String
 end
