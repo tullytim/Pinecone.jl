@@ -146,7 +146,6 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
         body["namespace"] = namespace
     end
     postbody = JSON3.write(body)
-    println("POST: $postbody")
     response = pineconeHTTPPost(url, ctx, postbody)
     if response != nothing && response.status == 200
         return String(response.body)
@@ -256,7 +255,6 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
         push!(body["queries"], Dict{String, Any}("values"=>vec))
     end
     postbody = JSON3.write(body)
-    println("QUERY POST: $postbody")
     response = pineconeHTTPPost(url, ctx, postbody)
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
@@ -394,6 +392,18 @@ function describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
     end
 end
 
+"""
+    scale_index(ctx::PineconeContext, indexobj::PineconeIndex, replicas::Int64)
+
+Scales out the number of replicas for a given index.
+
+# Example
+```julia
+context = Pinecone.init("abcde-1234-zyxv", "us-west1-gcp")
+index = PineconeIndex("my-index")
+result = Pinecone.scale_index(context, index, 2)
+```
+"""
 function scale_index(ctx::PineconeContext, indexobj::PineconeIndex, replicas::Int64)
     if replicas < 0
         throw(ArgumentError("Number of replicas should be greater than 0"))

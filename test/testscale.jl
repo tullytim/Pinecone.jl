@@ -1,6 +1,5 @@
 using Test 
 
-#include("../src/Pinecone.jl")
 using Pinecone
 
 APIKEY = ENV["PINECONE_API_KEY"]
