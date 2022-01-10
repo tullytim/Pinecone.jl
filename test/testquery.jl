@@ -157,9 +157,11 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
     @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001)
     # test topk exceeded when values included in return results
     @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000, "", true)
+
+    # max top k when including data or metadata is 1000, test for 1001 results
     # test topk exceeded when values included in return results with includesvalues=true
-    @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true, false)
+    @test_throws ArgumentError Pinecone.query(context, index, [v1], 1001, "", true, false)
     # test topk exceeded when values included in return results with includesmeta=true
-    @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", false, true)
+    @test_throws ArgumentError Pinecone.query(context, index, [v1], 1001, "", false, true)
  
  end
