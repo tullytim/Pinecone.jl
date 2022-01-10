@@ -2,6 +2,7 @@ using Test
 using Pinecone
 using JSON3
 
+# API Key from GitHub secrets
 GOODAPIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
 TESTINDEX = "filter-example"
@@ -160,133 +161,9 @@ end
    @test_throws ArgumentError Pinecone.delete(context, index, ["testid" for i in 1:1001], true, ns)
 end
 
-@testset verbose = true "Test fetch()" begin
-   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-   index = PineconeIndex(TESTINDEX)
-   testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-   testvector = Pinecone.PineconeVector("testid", v1, testdict)
-   testvector2 = Pinecone.PineconeVector("testid2", v1, testdict)
-   Pinecone.upsert(context, index, [testvector, testvector2], "testnamespace")
-   result = Pinecone.fetch(context, index, ["testid", "testid2"], "testnamespace")
-   @test result !== nothing
-   @test typeof(result) == String
+include("testfetch.jl")
+include("testquery.jl")
+include("testupsert.jl")
+include("testscale.jl")
 
-   result = Pinecone.fetch(context, index, ["testid", "testid2"])
-   @test result !== nothing
-   @test typeof(result) == String
-
-   #test exceeded max ids
-   @test_throws ArgumentError Pinecone.fetch(context, index, ["testid" for i in 1:1001])
-end
-
-@testset verbose = true "Test query()" begin
-   testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-   testvector = Pinecone.PineconeVector("testid", v1, testdict)
-   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-   index = PineconeIndex(TESTINDEX)
-   result = Pinecone.query(context, index, [testvector], 4)
-   @test result !== nothing
-   @test typeof(result) == String
-   result = Pinecone.query(context, index, [v1, v1], 4)
-   @test result !== nothing
-   @test typeof(result) == String
-      #should get nothing here w/ this bogus namespace
-   result = Pinecone.query(context, index, [v1, v1], 4, "bogusempty", true)
-   #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
-   @test result == nothing
-
-   println("***************** Test query() topK *****************")
-   # test topk exceeded
-   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10001)
-
-   println("***************** Test query() topk exceeded include results*************")
-   # test topk exceeded when values included in return results
-   @test_throws ArgumentError Pinecone.query(context, index, [testvector], 10000, "", true)
-   
-   # test topk exceeded with alternate query form
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001)
-   # test topk exceeded when values included in return results
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10000, "", true)
-   # test topk exceeded when values included in return results with includesvalues=true
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", true, false)
-   # test topk exceeded when values included in return results with includesmeta=true
-   @test_throws ArgumentError Pinecone.query(context, index, [v1], 10001, "", false, true)
-
-
-   result = Pinecone.query(context, index, [testvector], 1000, "", true)
-   @test result != nothing
-   @test typeof(result) == String
-   result = Pinecone.query(context, index, [testvector], 1000, "", true, false)
-   @test result != nothing
-   @test typeof(result) == String
-   result = Pinecone.query(context, index, [testvector], 1000, "", false, true)
-   @test result != nothing
-   @test typeof(result) == String
-end
-
-@testset verbose = true "Test upsert()" begin
-   testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-   context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-   index = PineconeIndex(TESTINDEX)
-   meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
-   testvector = Pinecone.PineconeVector("testid", v1, testdict)
-
-   @testset "Regular upsert()" begin
-      result = Pinecone.upsert(context, index, [testvector], "testnamespace")
-      @test result !== nothing
-      @test typeof(result) == String
-      #test no namespace
-
-      result = Pinecone.upsert(context, index, [testvector])
-      
-      @test result !== nothing
-      @test typeof(result) == String
-   end
-   @testset "Upsert with invalid args (ArgumentError)" begin
-      #test Arg checking exceptions
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA"], [v1, v2])
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v2])
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], [Dict{String,Any}("foo"=>"bar")])
-      # test too many vectors on insert
-      @test_throws ArgumentError Pinecone.upsert(context, index, ["zipA", "zipB"], [rand(Float32,10) for i in 1:1001])
-      largevec = [testvector for i in 1:1001]
-      @test_throws ArgumentError Pinecone.upsert(context, index, largevec)
-      @test_throws ArgumentError Pinecone.upsert(context, index, largevec, "ns")
-   end
-
-   @testset "Upsert with zipped vectors and ids" begin
-      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2])
-      @test result !== nothing
-      @test typeof(result) == String
-
-      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta)
-      @test result !== nothing
-      @test typeof(result) == String
-
-      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, "mynamespace")
-      @test result !== nothing
-      @test typeof(result) == String
-   end
-
-   @testset "Large upsert()" begin
-      context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-      largeindex = PineconeIndex("testlargeindex")
-      testrows= Vector{PineconeVector}()
-      for i in 1:1000
-         testvector = Pinecone.PineconeVector("testid_$i", rand(Float32, 10), testdict)
-         push!(testrows, testvector)
-      end      
-      result = Pinecone.upsert(context, largeindex, testrows, "testnamespace")
-      @test result !== nothing
-      @test typeof(result) == String
-   end
-
-   @testset "Scale Index()" begin
-      context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-      index = PineconeIndex(TESTINDEX)
-      @test_throws ArgumentError Pinecone.scale_index(context, index, -1)
-      result = Pinecone.scale_index(context, index, 2)
-      @test result !== nothing
-      @test result == true
-   end
-end
+println("DONE")
