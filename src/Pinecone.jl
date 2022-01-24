@@ -103,7 +103,7 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
         postbody["index_config"] = indexconfig
     end
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
-    response != nothing && response.status == 204 ? true : false
+    response != nothing && (response.status == 200 ||response.status == 204) ? true : false
 end  #create_index
 
 """
@@ -170,6 +170,7 @@ result = Pinecone.upsert(pinecone_context, pinecone_index, ["zipA", "zipB"], [[0
 [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], meta, "mynamespace")
 ```
 """
+
 function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, vectors::Vector{Vector{T}},
     meta::Array{Dict{String,Any}}=Dict{String,Any}[], namespace::String="") where {T<:AbstractFloat}
     numvectors = length(vectors)
