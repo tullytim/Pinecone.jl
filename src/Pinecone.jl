@@ -103,7 +103,7 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
         postbody["index_config"] = indexconfig
     end
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
-    response != nothing && (response.status == 200 ||response.status == 204) ? true : false
+    response != nothing && (response.status == 200 ||response.status == 204)
 end  #create_index
 
 """
@@ -369,7 +369,7 @@ Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
 function delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
     response = pineconeHTTPDelete(url, ctx)
-    response !== nothing && response.status == 204 ? true : false
+    response !== nothing && response.status == 204
 end
 
 """
@@ -414,7 +414,7 @@ function scale_index(ctx::PineconeContext, indexobj::PineconeIndex, replicas::In
     response = pineconeHTTPPatch(url, ctx, JSON3.write(postbody))
     # we get back 204, docs say 200 but they're wrong
     # https://www.pinecone.io/docs/api/operation/scale_index/
-    response != nothing && (response.status == 200 || response.status == 204) ? true : false
+    response != nothing && (response.status == 200 || response.status == 204) 
 end
 
 
