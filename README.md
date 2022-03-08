@@ -32,7 +32,11 @@ using Pinecone
 pinecone_context = Pinecone.init(apikey, environment) 
 ```
 which returns a PineconeContext that you'll use for subsequent calls.  apikey is clearly the Pinecone api key you get when you signup, environmens is
-the cloud environment for Pinecone that is likely something like "us-west1-gcp". 
+the cloud environment for Pinecone that is likely something like "us-west1-gcp". The list of supported environments (and growing):
+1. us-west1-gcp
+2. eu-west1-gcp
+3. us-east-1-aws
+
 From there, you can make function calls similar to what you do in the Python lib.  If you're going to make a call to do something with a specific
 index, you'll want to get a pointer to that index using the following:
 ```julia
