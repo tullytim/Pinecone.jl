@@ -94,6 +94,9 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
     if(dimension > MAX_DIMS)
         throw(ArgumentError("Creating index larger than max dimension size of " * string(MAX_DIMS)))
     end
+    if(metric != "cosine" && metric != "dotproduct" && metric != "euclidean")
+        throw(ArgumentError("Invalid index type.  Type must be one of 'euclidean', 'cosine', or 'dotproduct'."))
+    end
     if(pods <= 0)
         throw(ArgumentError("Number of pods must be > 0."))
     end
