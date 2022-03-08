@@ -90,12 +90,21 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
 ```
 """
-function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", indextype::String="approximated", pods::Int64=1, replicas::Int64=1, shards::Int64=1, indexconfig=Dict{String, Any}())
+function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", indextype::String="approximated", pods::Int64=1, replicas::Int64=1, shards::Int64=1, podtype::String="p1", indexconfig=Dict{String, Any}())
     if(dimension > MAX_DIMS)
         throw(ArgumentError("Creating index larger than max dimension size of " * string(MAX_DIMS)))
     end
+    if(pods <= 0)
+        throw(ArgumentError("Number of pods must be > 0."))
+    end
+    if(shards <= 0)
+        throw(ArgumentError("Number of shards must be > 0."))
+    end
+    if(podtype != "p1" && podtype != "s1")
+        throw(ArgumentError("Illegal pod type.  Must be p1 or s1."))
+    end
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTCREATEINDEX)
-    postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards)
+    postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards, "pods"=>pods)
     if indextype !== ""
         postbody["index_type"] = indextype
     end
