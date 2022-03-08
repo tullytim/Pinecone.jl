@@ -19,13 +19,21 @@ index = Pinecone.Index(INDEX);
        #sleep to wait for delete to go thru, backend takes a bit 
        sleep(10)
        indexconfig = Dict{String, Any}("k_bits"=>512, "hybrid"=>true)
-       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",pods=1, replicas=2, shards=1, indexconfig=indexconfig)
+       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",pods=1,replicas=2, shards=1, indexconfig=indexconfig)
        println("CREATE(): ", result)
        @test result == true
  
        #max dims is 10000, check you cannot create 10001
        @test_throws ArgumentError Pinecone.create_index(context, testindexname, 10001)
-    end
+       #broken pod type
+       @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="euclidean", indextype="approximated",pods=1,replicas=2, shards=1, podtype="fail", indexconfig=indexconfig)
+       #bad pods
+       @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="euclidean", indextype="approximated",pods=0,replicas=2, shards=1, podtype="p1", indexconfig=indexconfig)
+       #bad shards
+       @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="euclidean", indextype="approximated",pods=1,replicas=2, shards=0, podtype="p1", indexconfig=indexconfig)
+       #bad pods and shards
+       @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="euclidean", indextype="approximated",pods=0,replicas=2, shards=0, podtype="p1", indexconfig=indexconfig)
+      end
     @testset "Delete" begin
        result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
        println("DELETE(): ", result)
