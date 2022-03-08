@@ -90,7 +90,7 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
 ```
 """
-function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}())
+function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", indextype::String="approximated", pods::Int64=1, replicas::Int64=1, shards::Int64=1, indexconfig=Dict{String, Any}())
     if(dimension > MAX_DIMS)
         throw(ArgumentError("Creating index larger than max dimension size of " * string(MAX_DIMS)))
     end

@@ -16,10 +16,10 @@ index = Pinecone.Index(INDEX);
     @testset "Create" begin
        #delete in case already present from previous failure
        result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
-       #sleep to wait for delete to go thru, backend takes a bit
+       #sleep to wait for delete to go thru, backend takes a bit 
        sleep(10)
        indexconfig = Dict{String, Any}("k_bits"=>512, "hybrid"=>true)
-       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
+       result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",pods=1, replicas=2, shards=1, indexconfig=indexconfig)
        println("CREATE(): ", result)
        @test result == true
  
