@@ -48,7 +48,7 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
     @test haskey(vectors, "zipB") == true
  
     # first clean up everything in our namespace
-    result = Pinecone.delete(context, index, ["zipA", "zipB"], true, ns)
+    result = Pinecone.delete(context, index, [], true, ns)
     @test result !== nothing
     @test typeof(result) == String
  
