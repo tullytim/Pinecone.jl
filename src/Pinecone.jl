@@ -321,7 +321,7 @@ Pinecone.delete(context, index, ["deleteme1", "deleteme2"], false, "timnamespace
 {}
 ```
 """
-function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String="")
+function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}=[], deleteall::Bool=false, namespace::String="")
     if(length(ids) > MAX_DELETE)
         throw(ArgumentError("Max number of vectors per delete is " * string(MAX_DELETE)))
     end

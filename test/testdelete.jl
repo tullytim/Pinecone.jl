@@ -1,6 +1,5 @@
 using Test 
 using JSON3 
-
 using Pinecone
 
 APIKEY = ENV["PINECONE_API_KEY"]
@@ -16,15 +15,19 @@ testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
 v1 = [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3]
 v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
 
-@testset verbose = true "Test delete()" begin
-    ns = "deletenamespace"
-    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
-    index = PineconeIndex(TESTINDEX)
-    meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
- 
-    # first clean up everything in our namespace
-    result = Pinecone.delete(context, index, [], true, ns)
- 
+ns = "deletenamespace"
+context = Pinecone.init(APIKEY, CLOUDENV)
+index = PineconeIndex(INDEX)
+meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+
+# first clean up everything in our namespace
+println("DELETING ALL")
+deleteindexes = String[];
+result = Pinecone.delete(context, index, deleteindexes, true, "")
+
+println("DONE CLEANING")
+
+@testset verbose = true "Test delete()" begin  
     #insert some dummy data to be deleted and then sleep to wait for any indexing
     result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, ns)
     @test result !== nothing
