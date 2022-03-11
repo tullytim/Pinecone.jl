@@ -272,7 +272,6 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
         push!(body["queries"], Dict{String, Any}("values"=>vec))
     end
     postbody = JSON3.write(body)
-    println(postbody)
     response = pineconeHTTPPost(url, ctx, postbody)
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)
@@ -321,7 +320,7 @@ Pinecone.delete(context, index, ["deleteme1", "deleteme2"], false, "timnamespace
 {}
 ```
 """
-function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}=[], deleteall::Bool=false, namespace::String="")
+function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool=false, namespace::String="")
     if(length(ids) > MAX_DELETE)
         throw(ArgumentError("Max number of vectors per delete is " * string(MAX_DELETE)))
     end

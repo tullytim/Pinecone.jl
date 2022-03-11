@@ -21,11 +21,8 @@ index = PineconeIndex(INDEX)
 meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
 
 # first clean up everything in our namespace
-println("DELETING ALL")
-deleteindexes = String[];
-result = Pinecone.delete(context, index, deleteindexes, true, "")
 
-println("DONE CLEANING")
+result = Pinecone.delete(context, index, String[], true, "")
 
 @testset verbose = true "Test delete()" begin  
     #insert some dummy data to be deleted and then sleep to wait for any indexing
@@ -51,7 +48,7 @@ println("DONE CLEANING")
     @test haskey(vectors, "zipB") == true
  
     # first clean up everything in our namespace
-    result = Pinecone.delete(context, index, [], true, ns)
+    result = Pinecone.delete(context, index, String[], true, ns)
     @test result !== nothing
     @test typeof(result) == String
  
