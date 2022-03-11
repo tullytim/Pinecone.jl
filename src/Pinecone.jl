@@ -250,8 +250,9 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ],\"namespace\":\"\"}]}"
 ```
 """
+
 function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, 
-        includemeta::Bool=false) where {T<:AbstractFloat}
+        includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
     if topk > MAX_TOPK
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
     end
@@ -263,11 +264,15 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
     end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
     body = Dict{String, Any}("topK"=>topk, "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
+    if(length(filter) > 0)
+        body["filter"] = filter;
+    end
     body["queries"] =  []
     for vec in queries
         push!(body["queries"], Dict{String, Any}("values"=>vec))
     end
     postbody = JSON3.write(body)
+    println(postbody)
     response = pineconeHTTPPost(url, ctx, postbody)
     if response != nothing && (response.status == 200 || response.status == 400)
         return String(response.body)

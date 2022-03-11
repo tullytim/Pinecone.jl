@@ -16,13 +16,12 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
 @testset verbose = true "Test query()" begin
     testvector = Pinecone.PineconeVector("testid", v1, testdict)
     index = Pinecone.Index(TESTINDEX)
-    meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
+    #meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
     testvector = Pinecone.PineconeVector("testid", v1, testdict)
     testvector2 = Pinecone.PineconeVector("testid2", v2, testdict)
 
     result = Pinecone.upsert(context, index, [testvector, testvector2], "")
     result = Pinecone.upsert(context, index, [testvector, testvector2], NAMESPACE)
-
     #basic test for results
     result = Pinecone.query(context, index, [testvector], 4)
     @test result !== nothing
@@ -137,13 +136,60 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
       @test length(rvjson["results"]) > 0
       @test !haskey(rvjson["results"][1]["matches"][1], "metadata")
 
+    @testset "Test Filters" begin
+      #...means the "genre" takes on both values.
+      moviemeta = [Dict{String, Any}("genre"=>["comedy","documentary"]), Dict{String, Any}("genre"=>["comedy","documentary"])]
+      result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+[0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], moviemeta, "mynamespace")
+      filter = """{
+        "genre": {
+          "\$in": [
+            "comedy",
+            "documentary",
+            "drama"
+          ]
+        },
+        "year": {
+          "\$eq": 2019
+        }
+      }"""
+      result = Pinecone.query(context, index, [v1], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
+      println("result is: ", result)
+      rvjson = JSON3.read(result)
+      @test haskey(rvjson, "results")
+      @test length(rvjson["results"]) > 0
+      @test length(rvjson["results"][1]["matches"]) > 0
+
+      #changing to filter to match nothing, now checking that.  Should get no matches since no 'action' in the moviemeta
+      filter = """{
+        "genre": {
+          "\$in": [
+            "action"
+          ]
+        },
+        "year": {
+          "\$eq": 2019
+        }
+      }"""
+      result = Pinecone.query(context, index, [v1], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
+      println("result is: ", result)
+      rvjson = JSON3.read(result)
+      @test haskey(rvjson, "results")
+      @test length(rvjson["results"]) > 0
+      @test length(rvjson["results"][1]["matches"]) == 0
+    end
+
     result = Pinecone.query(context, index, [v1, v1], 4)
     @test result !== nothing
     @test typeof(result) == String
     #should get nothing here w/ this bogus namespace
     result = Pinecone.query(context, index, [v1, v1], 4, "bogusempty", true)
     #the bogus namespace returns HTTP 400 but with JSON body.  query() returns nothing so check
-    @test result == nothing
+    rvjson = JSON3.read(result)
+    resultsarr = rvjson["results"];
+    @test length(resultsarr) == 2
+    #now returns empty results w/ matches that'll have empty array, make sure bogus query is empty
+    @test length(resultsarr[1]["matches"]) == 0
  
     println("***************** Test query() topK *****************")
     # test topk exceeded
