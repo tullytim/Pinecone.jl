@@ -23,7 +23,7 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
     meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
  
     # first clean up everything in our namespace
-    result = Pinecone.delete(context, index, ["zipA", "zipB"], true, ns)
+    result = Pinecone.delete(context, index, [], true, ns)
  
     #insert some dummy data to be deleted and then sleep to wait for any indexing
     result = Pinecone.upsert(context, index, ["zipA", "zipB"], [v1, v2], meta, ns)
