@@ -99,6 +99,7 @@ This will return a JSON string:
 
 ### Filtering Results
 Applying filters to the metadata in the rows is fairly straightforward.  There is an optional argument "filter" in the query() function that takes in a Dict{String, Any} that represents a mapping of the filter.  For more on filter logic, see <https://www.pinecone.io/docs/metadata-filtering/>
+
 Suppose for example we have inserted data in the following way with metadata:
 ```julia
 moviemeta = [Dict{String, Any}("genre"=>["comedy","documentary"]), Dict{String, Any}("genre"=>["comedy","documentary"])]
