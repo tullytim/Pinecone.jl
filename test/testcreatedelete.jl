@@ -33,7 +33,7 @@ index = Pinecone.Index(INDEX);
        @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="euclidean", indextype="approximated",pods=1,replicas=2, shards=0, podtype="p1", indexconfig=indexconfig)
        #bad pods and shards
        @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="euclidean", indextype="approximated",pods=0,replicas=2, shards=0, podtype="p1", indexconfig=indexconfig)
-       #bad metri
+       #bad metric
        @test_throws ArgumentError Pinecone.create_index(context, "shouldfail", 10, metric="badmetric", indextype="approximated",pods=1,replicas=2, shards=1, podtype="p1", indexconfig=indexconfig)
 
       end

@@ -154,7 +154,13 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
         }
       }"""
       result = Pinecone.query(context, index, [v1], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
-      println("result is: ", result)
+      rvjson = JSON3.read(result)
+      @test haskey(rvjson, "results")
+      @test length(rvjson["results"]) > 0
+      @test length(rvjson["results"][1]["matches"]) > 0
+
+      #test other version that takes PineconeVector
+      result = Pinecone.query(context, index, [testvector], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
       rvjson = JSON3.read(result)
       @test haskey(rvjson, "results")
       @test length(rvjson["results"]) > 0
@@ -172,7 +178,13 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
         }
       }"""
       result = Pinecone.query(context, index, [v1], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
-      println("result is: ", result)
+      rvjson = JSON3.read(result)
+      @test haskey(rvjson, "results")
+      @test length(rvjson["results"]) > 0
+      @test length(rvjson["results"][1]["matches"]) == 0
+
+      result = Pinecone.query(context, index, [testvector], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
+      println(JSON3.@pretty(result))
       rvjson = JSON3.read(result)
       @test haskey(rvjson, "results")
       @test length(rvjson["results"]) > 0

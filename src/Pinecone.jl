@@ -224,9 +224,9 @@ julia> Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
 ],\"namespace\":\"\"}]}"
 ```
 """
-function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false)
+function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
     rawvectors = [queries[i].values for i in 1:length(queries)]
-    query(ctx, indexobj, rawvectors, topk, namespace, includevalues, includemeta)
+    query(ctx, indexobj, rawvectors, topk, namespace, includevalues, includemeta, filter)
 end
 
 """
