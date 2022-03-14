@@ -97,6 +97,31 @@ This will return a JSON string:
 {"vectors":{"testid":{"id":"testid","values":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3],"metadata":{"genre":"documentary","year":2019}},"testid2":{"id":"testid2","values":[0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3],"metadata":{"genre":"documentary","year":2019}}},"namespace":"testnamespace"}
 ```
 
+### Filtering Results
+Applying filters to the metadata in the rows is fairly straightforward.  There is an optional argument "filter" in the query() function that takes in a Dict{String, Any} that represents a mapping of the filter.  For more on filter logic, see <https://www.pinecone.io/docs/metadata-filtering/>
+Suppose for example we have inserted data in the following way with metadata:
+```julia
+moviemeta = [Dict{String, Any}("genre"=>["comedy","documentary"]), Dict{String, Any}("genre"=>["comedy","documentary"])]
+result = Pinecone.upsert(context, index, ["zipA", "zipB"], [[0.1, 0.2, 0.3, 0.4, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]], moviemeta, "mynamespace")
+```
+We can write a query to grab these rows (supposing there was other nonmatching rows around it with:)
+```julia
+filter = """{
+        "genre": {
+          "\$in": [
+            "comedy",
+            "documentary",
+            "drama"
+          ]
+        },
+        "year": {
+          "\$eq": 2019
+        }
+}"""
+result = Pinecone.query(context, index, [v1], 4, "mynamespace", true, true, JSON3.read(filter, Dict{String, Any}))
+```
+In the above we specified a JSON blob to provide the filter and passed into the last arg of query() which takes a Dict{String,Any} where we used the Julia JSON3 package to do the very clean and quick conversion.  
+
 ### Creating/Deleting Indexes
 Although you can easily create/delete indexes in the Pinecone console, there may be many times where you need to do this programatically.
 Here's a very simple example of how to create an index named "testindex5" with 10 dimensions.  This gives you an index with a single shard  and no additional replicas that will perform approximate nearest neighbor (ANN) search using cosine similarity by default.
