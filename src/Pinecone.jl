@@ -77,7 +77,7 @@ end #init
 
 # note no repsonse body from create, derive success from the HTTP 204
 """
-    create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="euclidean", indextype::String="", replicas::Int64=0, shards::Int64=1, indexconfig=Dict{String, Any}())
+   create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", indextype::String="approximated", pods::Int64=1, replicas::Int64=1, shards::Int64=1, podtype::String="p1", indexconfig=Dict{String, Any}())
 
 Creates an index with a given PineconeContext, which can be accessed by a call to init(), the name of the index, and the number of dimensions.
 
@@ -202,7 +202,7 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String
 end
 
 """
-    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false)
+   query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
 
 Query an index using the given context that match ``queries`` passed in.  The ``PineconeVector`` that is queries is a simple ``PineconeVector`` as described above.
 Note there is an another version of ``query()`` that takes in a ``Vector{Vector{<:AbstractFloat}}`` for the ``queries`` parameter.  Functionally equivalent.
@@ -230,7 +230,7 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Pi
 end
 
 """
-    query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false) where {T<:AbstractFloat}
+   query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
 
 Query an index using the given context that match ``queries`` passed in. Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
 Note there is an alternate form for ``query()`` that takes in a ``Vector{PineconeVector}`` instead.  Functionally equivalent.
