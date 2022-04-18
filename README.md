@@ -1,6 +1,6 @@
 # Pinecone.jl
 
-*Pinecone client for Julia*
+*[Julia](https://julialang.org/) API for the [Pinecone](https://pinecone.io) vector database.
 
 [![CI](https://github.com/tullytim/Pinecone.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/tullytim/Pinecone.jl/actions/workflows/CI.yml)
 [![codecov](https://codecov.io/gh/tullytim/Pinecone.jl/branch/main/graph/badge.svg?token=9KN1APH5F5)](https://codecov.io/gh/tullytim/Pinecone.jl)
