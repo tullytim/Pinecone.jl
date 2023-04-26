@@ -1,6 +1,7 @@
 using Test 
 using JSON3 
-using Pinecone
+#using Pinecone
+include("../src/Pinecone.jl")
 
 APIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
@@ -17,7 +18,6 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
 
 ns = "deletenamespace"
 context = Pinecone.init(APIKEY, CLOUDENV)
-index = PineconeIndex(INDEX)
 meta = [Dict{String,Any}("foo"=>"bar"), Dict{String,Any}("bar"=>"baz")]
 
 # first clean up everything in our namespace

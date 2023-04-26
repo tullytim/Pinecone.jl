@@ -69,6 +69,7 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 """
 function init(apikey::String, environment::String)
     response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), apikey)
+    print(response)
     if response != nothing && response.status == 200
         rvdict = pineconeGetDict(String(response.body))
         return PineconeContext(apikey, environment, rvdict["project_name"])
@@ -77,20 +78,19 @@ end #init
 
 # note no repsonse body from create, derive success from the HTTP 204
 """
-   create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", indextype::String="approximated", pods::Int64=1, replicas::Int64=1, shards::Int64=1, podtype::String="p1", indexconfig=Dict{String, Any}())
+   create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", pods::Int64=1, replicas::Int64=1, shards::Int64=1, podtype::String="p1")
 
 Creates an index with a given PineconeContext, which can be accessed by a call to init(), the name of the index, and the number of dimensions.
 
-Note that there are other parameters for the distance metric, indextype, number of replicas and shards as well as the indexconfig. 
 This function returns a JSON blob as a string, or nothing if it failed. Do recommend using JSON3 to parse the blob.
 
 # Example
 ```julia
 context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
-result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", indextype="approximated",replicas=2, shards=1, indexconfig=indexconfig)
+result = Pinecone.create_index(context, testindexname, 10, metric="euclidean", replicas=2, shards=1)
 ```
 """
-function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", indextype::String="approximated", pods::Int64=1, replicas::Int64=1, shards::Int64=1, podtype::String="p1", indexconfig=Dict{String, Any}())
+function create_index(ctx::PineconeContext, indexname::String, dimension::Int64; metric::String="cosine", pods::Int64=1, replicas::Int64=1, shards::Int64=1, podtype::String="p1")
     if(dimension > MAX_DIMS)
         throw(ArgumentError("Creating index larger than max dimension size of " * string(MAX_DIMS)))
     end
@@ -108,14 +108,9 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
     end
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTCREATEINDEX)
     postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards, "pods"=>pods)
-    if indextype !== ""
-        postbody["index_type"] = indextype
-    end
-    if length(indexconfig) > 0
-        postbody["index_config"] = indexconfig
-    end
+  
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
-    response != nothing && (response.status == 200 ||response.status == 204)
+    response != nothing && (response.status >= 200 && response.status < 300)
 end  #create_index
 
 """
@@ -365,6 +360,9 @@ Pinecone.whoami(context)
 """
 function whoami(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
+    print("------------------------------------\n")
+    print(response)
+    print("------------------------------------\n")
     if response != nothing && response.status == 200
         return String(response.body)
     end
@@ -385,7 +383,7 @@ Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
 function delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
     response = pineconeHTTPDelete(url, ctx)
-    response !== nothing && response.status == 204
+    response !== nothing && response.status == 202
 end
 
 """
@@ -430,7 +428,7 @@ function scale_index(ctx::PineconeContext, indexobj::PineconeIndex, replicas::In
     response = pineconeHTTPPatch(url, ctx, JSON3.write(postbody))
     # we get back 204, docs say 200 but they're wrong
     # https://www.pinecone.io/docs/api/operation/scale_index/
-    response != nothing && (response.status == 200 || response.status == 204) 
+    response != nothing && (response.status >= 200 && response.status <= 204) 
 end
 
 

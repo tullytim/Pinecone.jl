@@ -1,6 +1,7 @@
 using Test 
 using JSON3 
-using Pinecone
+#using Pinecone
+include("../src/Pinecone.jl")
 
 APIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
@@ -17,13 +18,13 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
 
 
 @testset "PineconeIndex Type Tests" begin
+    print("TEST INDEX IS", TESTINDEX, "\n")
     pineconeindex = PineconeIndex(TESTINDEX)
-    @test typeof(pineconeindex) == PineconeIndex
+    @test (typeof(pineconeindex) == PineconeIndex || typeof(pineconeindex) == Main.Pinecone.PineconeIndex)
     @test pineconeindex.indexname == TESTINDEX
     pineconeindex = Pinecone.Index(TESTINDEX)
-    @test typeof(pineconeindex) == PineconeIndex
+    @test (typeof(pineconeindex) == PineconeIndex || typeof(pineconeindex) == Main.Pinecone.PineconeIndex)
     @test pineconeindex.indexname == TESTINDEX
-    println("PineconeIndex is ", pineconeindex)
  end;
  
  @testset "PineconeContext Type Tests" begin
@@ -63,5 +64,5 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
     #now check for proper setup
     goodcontext = Pinecone.init(GOODAPIKEY, CLOUDENV)
     @test goodcontext != nothing
-    @test typeof(goodcontext) == PineconeContext
+    @test (typeof(goodcontext) == PineconeContext || typeof(goodcontext) == Main.Pinecone.PineconeContext)
  end

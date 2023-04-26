@@ -2,7 +2,8 @@
 using Test 
 using JSON3 
 
-using Pinecone
+#using Pinecone
+include("../src/Pinecone.jl")
 
 APIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"

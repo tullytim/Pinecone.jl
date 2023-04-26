@@ -1,11 +1,12 @@
 using Test 
 using JSON3 
-using Pinecone
+#using Pinecone
+include("../src/Pinecone.jl")
 
 APIKEY = ENV["PINECONE_API_KEY"]
 context = Pinecone.init(APIKEY, "us-west1-gcp")
 
-INDEX = "testfetch"
+INDEX = "drivertest3"
 NAMESPACE = "mynamespace"
 index = Pinecone.Index(INDEX);
 

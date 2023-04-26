@@ -1,5 +1,6 @@
 using Test
-using Pinecone
+#using Pinecone
+include("../src/Pinecone.jl")
 using JSON3
 
 # API Key from GitHub secrets
@@ -14,6 +15,7 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
    println("TEST WITH APIKEY: ", GOODAPIKEY)
    context = Pinecone.init(GOODAPIKEY, CLOUDENV)
    result = Pinecone.whoami(context)
+   print(result)
    @test result !== nothing
    @test typeof(result) == String
 end

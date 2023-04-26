@@ -1,6 +1,6 @@
 using Test 
-
-using Pinecone
+include("../src/Pinecone.jl")
+#using Pinecone
 
 APIKEY = ENV["PINECONE_API_KEY"]
 CLOUDENV="us-west1-gcp"
