@@ -69,7 +69,6 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 """
 function init(apikey::String, environment::String)
     response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), apikey)
-    print(response)
     if response != nothing && response.status == 200
         rvdict = pineconeGetDict(String(response.body))
         return PineconeContext(apikey, environment, rvdict["project_name"])
@@ -360,9 +359,6 @@ Pinecone.whoami(context)
 """
 function whoami(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
-    print("------------------------------------\n")
-    print(response)
-    print("------------------------------------\n")
     if response != nothing && response.status == 200
         return String(response.body)
     end
@@ -433,3 +429,4 @@ end
 
 
 end # module
+
