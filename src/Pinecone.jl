@@ -2,7 +2,7 @@ __precompile__(true)
 
 module Pinecone
 
-using JSON3
+using JSON3 
 using StructTypes
 
 export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index, fetch, delete
