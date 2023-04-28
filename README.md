@@ -9,7 +9,7 @@ Pinecone.jl is a [Julia](https://julialang.org/) API for the [Pinecone](https://
 The package can be installed with Julia's package manager,
 either by using the Pkg REPL mode (press `]` to enter):
 ```
-pkg> add Pinecone
+pkg> add Pinecone 
 ```
 or by using Pkg functions
 ```julia
