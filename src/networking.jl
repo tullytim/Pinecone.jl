@@ -7,14 +7,8 @@ const HEADER_CONTENT_TYPE = "Content-Type"
 const CONTENT_TYPE_JSON = "Content-Type: application/json"
 
 function dohttp(method, url, headers, body::String="")
-    try
-        HTTP.request(method, url, headers, body)
-    catch e
-        dumpexception(e)
-    end
+    HTTP.request(method, url, headers, body)
 end
-
-dumpexception(e) = println("Error communicating with Pinecone service.  Exception is: \n", e)
 
 pineconeHTTPGet(url::String, ctx::Pinecone.PineconeContext) = begin
     dohttp("GET", url,[HEADER_API_KEY=>ctx.apikey])
