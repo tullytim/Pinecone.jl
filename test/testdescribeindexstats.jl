@@ -8,7 +8,7 @@ CLOUDENV="us-west1-gcp"
 
 context = Pinecone.init(APIKEY, CLOUDENV)
 
-INDEX = "filter-example"
+INDEX = "filter-example" #fixed
 NAMESPACE = "mynamespace"
 
 @testset "Test describe_index_stats()" begin
