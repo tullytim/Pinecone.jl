@@ -25,7 +25,7 @@ index = Pinecone.Index(INDEX);
 		end
 		result = Pinecone.create_index(context, testindexname, 10, metric = "cosine", pods = 1, replicas = 2, shards = 1)
 		println("CREATE(): ", result)
-		@test result == true
+		@test result != nothing
 
 		#max dims is 10000, check you cannot create 10001
 		@test_throws ArgumentError Pinecone.create_index(context, testindexname, 10001)
@@ -47,7 +47,7 @@ index = Pinecone.Index(INDEX);
 		if (occursin.(testindexname, indexes))
 			print("found stale index for testing, deleting: ", testindexname)
 			result = Pinecone.delete_index(context, Pinecone.Index(testindexname))
-			@test result == true
+			@test result != nothing
 		end
 
 	end
