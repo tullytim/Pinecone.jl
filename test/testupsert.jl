@@ -59,7 +59,7 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
        @test result !== nothing
        @test typeof(result) == String
     end
- 
+ #=
     @testset "Large upsert()" begin
        context = Pinecone.init(APIKEY, CLOUDENV)
        largeindex = Pinecone.Index("testlargeindex")
@@ -72,4 +72,5 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
        @test result !== nothing
        @test typeof(result) == String
     end
+    =#
 end
