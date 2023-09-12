@@ -109,7 +109,7 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
     postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards, "pods"=>pods)
   
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
-    (response.status >= 200 && response.status < 300)
+    response != nothing && (response.status >= 200 && response.status < 300)
 end  #create_index
 
 """
@@ -379,7 +379,7 @@ Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
 function delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
     response = pineconeHTTPDelete(url, ctx)
-    return (response.status >= 200 && response.status < 300)
+    response !== nothing && response.status == 202
 end
 
 """
