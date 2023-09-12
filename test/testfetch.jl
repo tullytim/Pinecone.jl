@@ -7,6 +7,7 @@ APIKEY = ENV["PINECONE_API_KEY"]
 context = Pinecone.init(APIKEY, "us-west1-gcp")
 
 INDEX = "drivertest3"
+INDEX = "filter-example" #changed from drivertest3 to cleanup costs
 NAMESPACE = "mynamespace"
 index = Pinecone.Index(INDEX);
 
