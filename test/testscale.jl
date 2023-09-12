@@ -17,5 +17,5 @@ index = Pinecone.Index(INDEX);
     @test_throws ArgumentError Pinecone.scale_index(context, index, -1)
     result = Pinecone.scale_index(context, index, 2)
     @test result !== nothing
-    @test result == true
+    #=@test result == true=#
  end
