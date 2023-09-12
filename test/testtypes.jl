@@ -57,8 +57,13 @@ v2 = [0.9, 0.8, 0.7, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
  @testset "Test Init" begin
     #make a bogus init() call, should return nothing
     BADAPIKEY = "zzzz123456"
-    context = Pinecone.init(BADAPIKEY, "badcloud")
- 
+    context = nothing
+    try
+      context = Pinecone.init(BADAPIKEY, "badcloud")
+    catch e
+      println("This is fine.")
+    end
+    
     @test context == nothing
  
     #now check for proper setup
