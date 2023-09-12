@@ -109,7 +109,7 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
     postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards, "pods"=>pods)
   
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
-    response != nothing && (response.status >= 200 && response.status < 300)
+    return (response.status >= 200 && response.status < 300)
 end  #create_index
 
 """
