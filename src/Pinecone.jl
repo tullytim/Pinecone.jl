@@ -2,7 +2,7 @@ __precompile__(true)
 
 module Pinecone
 
-using JSON3
+using JSON3 
 using StructTypes
 
 export PineconeContext, PineconeIndex, PineconeVector, whoami, init, list_indexes, query, upsert, delete_index, describe_index_stats, create_index, fetch, delete
@@ -69,10 +69,9 @@ context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
 """
 function init(apikey::String, environment::String)
     response = pineconeHTTPGet(pineconeMakeURLForController(environment, ENDPOINTWHOAMI), apikey)
-    if response != nothing && response.status == 200
-        rvdict = pineconeGetDict(String(response.body))
-        return PineconeContext(apikey, environment, rvdict["project_name"])
-    end
+    
+    rvdict = pineconeGetDict(String(response.body))
+    return PineconeContext(apikey, environment, rvdict["project_name"])
 end #init
 
 # note no repsonse body from create, derive success from the HTTP 204
@@ -109,7 +108,6 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
     postbody = Dict{String, Any}("name"=>indexname, "dimension"=>dimension, "metric"=>metric, "replicas"=>replicas, "shards"=>shards, "pods"=>pods)
   
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
-    return (response.status >= 200 && response.status < 300)
 end  #create_index
 
 """
@@ -153,9 +151,8 @@ function upsert(ctx::PineconeContext, indexobj::PineconeIndex, vectors::Vector{P
     end
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
-    if response != nothing && response.status == 200
-        return String(response.body)
-    end
+
+    return String(response.body)
 end #upsert
 
 """
@@ -267,9 +264,8 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
     end
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
-    if response != nothing && (response.status == 200 || response.status == 400)
-        return String(response.body)
-    end
+        
+    return String(response.body)
 end #query
 
 """
@@ -295,9 +291,8 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
     response = pineconeHTTPGet(url, ctx)
-    if response != nothing && (response.status == 200 || response.status == 400)
-        return String(response.body)
-    end
+    
+    return String(response.body)
 end
 
 """
@@ -322,9 +317,8 @@ function delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String
     urlargs = "?" * join(renamedids, "&") * "&deleteAll=" * string(deleteall) * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDELETE) * urlargs
     response = pineconeHTTPDelete(url, ctx)
-    if response != nothing && (response.status == 200 || response.status == 400)
-        return String(response.body)
-    end
+        
+    return String(response.body)
 end
 
 """
@@ -341,9 +335,7 @@ Pinecone.list_indexes(context)
 """
 function list_indexes(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTLISTINDEXES), context)
-    if response != nothing && response.status == 200
-        return String(response.body)
-    end
+    return String(response.body)
 end
 
 """ 
@@ -359,9 +351,7 @@ Pinecone.whoami(context)
 """
 function whoami(context::PineconeContext)
     response = pineconeHTTPGet(pineconeMakeURLForController(context.cloudenvironment, ENDPOINTWHOAMI), context)
-    if response != nothing && response.status == 200
-        return String(response.body)
-    end
+    return String(response.body)
 end
 
 """
@@ -379,7 +369,6 @@ Pinecone.delete_index(context, Pinecone.Index("index-to-delete"))
 function delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForController(ctx.cloudenvironment, ENDPOINTDELETEINDEX * "/" * indexobj.indexname)
     response = pineconeHTTPDelete(url, ctx)
-    response !== nothing && response.status == 202
 end
 
 """
@@ -398,9 +387,7 @@ Pinecone.describe_index_stats(context, index)
 function describe_index_stats(ctx::PineconeContext, indexobj::PineconeIndex)
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTDESCRIBEINDEXSTATS)
     response = pineconeHTTPGet(url, ctx)
-    if response != nothing && response.status == 200
-        return String(response.body)
-    end
+    return String(response.body)
 end
 
 """
@@ -424,9 +411,7 @@ function scale_index(ctx::PineconeContext, indexobj::PineconeIndex, replicas::In
     response = pineconeHTTPPatch(url, ctx, JSON3.write(postbody))
     # we get back 204, docs say 200 but they're wrong
     # https://www.pinecone.io/docs/api/operation/scale_index/
-    response != nothing && (response.status >= 200 && response.status <= 204) 
 end
 
 
 end # module
-
