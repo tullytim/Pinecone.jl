@@ -1,7 +1,7 @@
 name = "Pinecone"
 uuid = "ee90fdae-f7f0-4648-8b00-9c0307cf46d9"
 authors = ["Tim Tully <tim@menlovc.com>"]
-version = "1.1"
+version = "1.1.1"
 
 [deps]
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
