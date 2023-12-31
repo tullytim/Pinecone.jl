@@ -1,4 +1,4 @@
-__precompile__(true)
+__precompile__(false)
 
 module Pinecone
 
@@ -215,9 +215,9 @@ julia> Pinecone.query(pinecone_context, pinecone_index, [testvector], 4)
 ],\"namespace\":\"\"}]}"
 ```
 """
-function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
-    rawvectors = [queries[i].values for i in 1:length(queries)]
-    query(ctx, indexobj, rawvectors, topk, namespace, includevalues, includemeta, filter)
+function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::PineconeVector, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
+    #rawvectors = [queries[i].values for i in 1:length(queries)]
+    query(ctx, indexobj, queries.values, topk, namespace, includevalues, includemeta, filter)
 end
 
 """
@@ -242,7 +242,7 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ```
 """
 
-function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, 
+function query(ctx::PineconeContext, indexobj::PineconeIndex, vector::Vector{T}, topk::Int64=10, namespace::String="", includevalues::Bool=false, 
         includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
     if topk > MAX_TOPK
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
@@ -254,16 +254,13 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_META) * " when including meatadata in results"))
     end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
-    body = Dict{String, Any}("topK"=>topk, "vector"=>[], "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
+    body = Dict{String, Any}("topK"=>topk, "vector"=>vector, "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
     if(length(filter) > 0)
         body["filter"] = filter;
     end
-    for vec in queries
-        push!(body["vector"], Dict{String, Any}("values"=>vec))
-    end
+    
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
-        
     return String(response.body)
 end #query
 
