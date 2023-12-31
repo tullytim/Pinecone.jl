@@ -258,9 +258,9 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
     if(length(filter) > 0)
         body["filter"] = filter;
     end
-    body["queries"] =  []
+    body["vector"] =  []
     for vec in queries
-        push!(body["queries"], Dict{String, Any}("values"=>vec))
+        push!(body["vector"], Dict{String, Any}("values"=>vec))
     end
     postbody = JSON3.write(body)
     response = pineconeHTTPPost(url, ctx, postbody)
