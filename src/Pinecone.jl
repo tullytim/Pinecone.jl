@@ -254,11 +254,10 @@ function query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Ve
         throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_META) * " when including meatadata in results"))
     end
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTQUERYINDEX)
-    body = Dict{String, Any}("topK"=>topk, "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
+    body = Dict{String, Any}("topK"=>topk, "vector"=>[], "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
     if(length(filter) > 0)
         body["filter"] = filter;
     end
-    body["vector"] =  []
     for vec in queries
         push!(body["vector"], Dict{String, Any}("values"=>vec))
     end
