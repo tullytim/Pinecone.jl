@@ -138,3 +138,4 @@ Deleting an index is fairly straightforward.  In this example, we will delete th
 ```julia
 Pinecone.delete_index(pinecone_context, Pinecone.Index("testindex5"))
 ```
+test
