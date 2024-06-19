@@ -91,3 +91,29 @@ function Index(ctx::PineconeContextv3, indexname::String)
     response = pineconeHTTPGet(url, ctx.apikey)
     return JSON3.read(String(response.body), PineconeIndexv3)
 end
+
+function describe_index_stats(ctx::PineconeContextv3, indexobj::PineconeIndexv3)
+    url = pineconeMakeURLForIndex(indexobj, ENDPOINTDESCRIBEINDEXSTATS)
+    response = pineconeHTTPGet(url, ctx.apikey)
+    return String(response.body)
+end
+
+function delete_index(ctx::PineconeContextv3, indexname::String)
+    url = pineconeMakeURLForIndex(indexname)
+    response = pineconeHTTPDelete(url, ctx.apikey)
+end
+
+function upsert(ctx::PineconeContextv3, indexobj::PineconeIndexv3, vectors::Vector{PineconeVector}, namespace::String="")
+    if(length(vectors) > MAX_UPSERT_VECTORS)
+        throw(ArgumentError("Max number of vectors per upsert is " * string(MAX_UPSERT_VECTORS)))
+    end
+    url = pineconeMakeURLForIndex(indexobj, ENDPOINTUPSERT)
+    body = Dict{String, Any}("vectors" => vectors)
+    if namespace !== nothing && namespace != ""
+        body["namespace"] = namespace
+    end
+    postbody = JSON3.write(body)
+    response = pineconeHTTPPost(url, ctx.apikey, postbody)
+    return String(response.body)
+end #upsert
+

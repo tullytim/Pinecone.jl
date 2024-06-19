@@ -28,6 +28,11 @@ pineconeHTTPPost(url::String, ctx::Pinecone.PineconeContext, postbody::String=""
     dohttp("POST", url, headers, postbody);
 end
 
+pineconeHTTPDelete(url::String, apikey::String) = begin
+    headers = Dict{String, Any}(HEADER_API_KEY=>apikey);
+    dohttp("DELETE", url, headers);
+end
+
 pineconeHTTPDelete(url::String, ctx::Pinecone.PineconeContext) = begin
     headers = Dict{String, Any}(HEADER_API_KEY=>ctx.apikey);
     dohttp("DELETE", url, headers);
