@@ -44,15 +44,3 @@ end
 pineconeMakeURLForIndex(index::Pinecone.PineconeIndex, ctx::Pinecone.PineconeContext, endpoint::String) = begin
     "https://" * index.indexname * "-" * ctx.projectname * ".svc." * ctx.cloudenvironment * ".pinecone.io/" * endpoint
 end
-
-pineconeMakeURLForIndex(index::Pinecone.PineconeIndexv3, endpoint::String) = begin
-    "https://"*index.host *"/"* endpoint
-end
-
-pineconeMakeURLForIndex(indexname::String) = begin
-    "https://api.pinecone.io/indexes/$indexname"
-end
-
-pineconeMakeURLForIndex() = begin
-    "https://api.pinecone.io/indexes"
-end
