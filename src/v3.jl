@@ -81,10 +81,7 @@ function list_index_objects(ctx::PineconeContextv3)
     JSON3.read(JSON3.write(indexes), Vector{PineconeIndexv3})
 end
 
-function list_indexes(ctx::PineconeContextv3)
-    objs = list_index_objects(ctx)
-    map(x->x.name, objs)
-end
+list_indexes(ctx::PineconeContextv3) = map(x->x.name, list_index_objects(ctx))
 
 function Index(ctx::PineconeContextv3, indexname::String)
     url = pineconeMakeURLForIndex(indexname)
@@ -117,3 +114,12 @@ function upsert(ctx::PineconeContextv3, indexobj::PineconeIndexv3, vectors::Vect
     return String(response.body)
 end #upsert
 
+function delete(ctx::PineconeContextv3, indexobj::PineconeIndexv3, ids::Array{String}, deleteall::Bool=false, namespace::String="")
+    if(length(ids) > MAX_DELETE)
+        throw(ArgumentError("Max number of vectors per delete is " * string(MAX_DELETE)))
+    end
+    url = pineconeMakeURLForIndex(indexobj, ENDPOINTDELETE)
+    postbody = Dict{String, Any}("ids"=>ids, "namespace"=>namespace, "deleteAll"=>deleteall)
+    response = pineconeHTTPPost(url, ctx.apikey, JSON3.write(postbody))
+    return String(response.body)
+end
