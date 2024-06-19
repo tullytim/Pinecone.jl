@@ -18,9 +18,19 @@ pineconeHTTPGet(url::String, apikey::String) = begin
     dohttp("GET", url,[HEADER_API_KEY=>apikey]);
 end
 
+pineconeHTTPPost(url::String, apikey::String, postbody::String="") = begin
+    headers = Dict{String, Any}(HEADER_API_KEY=>apikey, HEADER_CONTENT_TYPE=>CONTENT_TYPE_JSON);
+    dohttp("POST", url, headers, postbody);
+end
+
 pineconeHTTPPost(url::String, ctx::Pinecone.PineconeContext, postbody::String="") = begin
     headers = Dict{String, Any}(HEADER_API_KEY=>ctx.apikey, HEADER_CONTENT_TYPE=>CONTENT_TYPE_JSON);
     dohttp("POST", url, headers, postbody);
+end
+
+pineconeHTTPDelete(url::String, apikey::String) = begin
+    headers = Dict{String, Any}(HEADER_API_KEY=>apikey);
+    dohttp("DELETE", url, headers);
 end
 
 pineconeHTTPDelete(url::String, ctx::Pinecone.PineconeContext) = begin
@@ -44,4 +54,3 @@ end
 pineconeMakeURLForIndex(index::Pinecone.PineconeIndex, ctx::Pinecone.PineconeContext, endpoint::String) = begin
     "https://" * index.indexname * "-" * ctx.projectname * ".svc." * ctx.cloudenvironment * ".pinecone.io/" * endpoint
 end
-
