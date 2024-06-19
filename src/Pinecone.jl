@@ -288,8 +288,7 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     renamedids = ["ids=$row" for row in ids] 
     urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
-    response = pineconeHTTPGet(url, ctx)
-    
+    response = pineconeHTTPGet(url, ctx)   
     return String(response.body)
 end
 

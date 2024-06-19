@@ -123,3 +123,14 @@ function delete(ctx::PineconeContextv3, indexobj::PineconeIndexv3, ids::Array{St
     response = pineconeHTTPPost(url, ctx.apikey, JSON3.write(postbody))
     return String(response.body)
 end
+
+function fetch(ctx::PineconeContextv3, indexobj::PineconeIndexv3, ids::Array{String}, namespace::String="")
+    if(length(ids) > MAX_FETCH)
+        throw(ArgumentError("Max number of vectors per fetch is " * string(MAX_FETCH)))
+    end
+    renamedids = ["ids=$row" for row in ids]
+    urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
+    url = pineconeMakeURLForIndex(indexobj, ENDPOINTFETCH) * urlargs
+    response = pineconeHTTPGet(url, ctx.apikey)
+    return String(response.body)
+end
