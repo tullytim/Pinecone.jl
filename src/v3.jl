@@ -1,18 +1,23 @@
+export PineconeContextv3, PineconeIndexv3, Serverless, Status
+
 struct PineconeContextv3
     apikey::String
 end
 Base.show(io::IO, ctx::PineconeContextv3) = print(io, ctx.apikey)
-abstract type AbstractSpec end
-
-struct ServerLess <: AbstractSpec
+struct Serverless 
     cloud::String
     region::String
 end
 
-@kwdef struct PodSpec <: AbstractSpec
+@kwdef struct PodSpec 
     environment::String
     podtype::String
     ## TBD
+end
+
+struct Status
+    ready::Bool
+    state::String
 end
 
 struct PineconeIndexv3
@@ -20,14 +25,14 @@ struct PineconeIndexv3
     host::String
     metric::String
     name::String
-    spec::Dict{String, ServerLess}
+    spec::Dict{String, Serverless}
     status::Status
 end
 Base.show(io::IO, index::PineconeIndexv3) = print(io, "PineconeIndex connected to ", index.name)
 
 StructTypes.StructType(::Type{PineconeIndexv3}) = StructTypes.UnorderedStruct()
 StructTypes.StructType(::Type{Status}) = StructTypes.UnorderedStruct()
-StructTypes.StructType(::Type{ServerLess}) = StructTypes.UnorderedStruct()
+StructTypes.StructType(::Type{Serverless}) = StructTypes.UnorderedStruct()
 
 pineconeMakeURLForIndex(index::Pinecone.PineconeIndexv3, endpoint::String) = begin
     "https://"*index.host *"/"* endpoint
@@ -41,27 +46,48 @@ pineconeMakeURLForIndex() = begin
     "https://api.pinecone.io/indexes"
 end
 
-function create_index(ctx::PineconeContextv3, spec::PineconeIndexv3)
-    dimension = index.dimension
+function create_index(ctx::PineconeContextv3, indexname::String, dimension::Int, metric::String="cosine", cloud::String="aws", region::String="us-east-1")
+    dimension = dimension
     if(dimension > MAX_DIMS)
         throw(ArgumentError("Creating index larger than max dimension size of " * string(MAX_DIMS)))
     end
-    metric = index.metric
+    metric = metric
     if(metric != "cosine" && metric != "dotproduct" && metric != "euclidean")
         throw(ArgumentError("Invalid index type.  Type must be one of 'euclidean', 'cosine', or 'dotproduct'."))
     end
-    spec = index.spec
-    if spec isa PodSpec
-        if(spec.pods <= 0)
-            throw(ArgumentError("Number of pods must be > 0."))
-        end
-        if(spec.shards <= 0)
-            throw(ArgumentError("Number of shards must be > 0."))
-        end
-        if(spec.podtype != "p1" && spec.podtype != "s1")
-            throw(ArgumentError("Illegal pod type.  Must be p1 or s1."))
-        end
-    end
+    body = Dict("dimension"=>dimension,
+                "metric"=>metric,
+                "name"=>indexname,
+                "spec"=>Dict(
+                    "serverless"=>Dict(
+                        "cloud"=>cloud,
+                        "region"=>region
+                    )
+                )
+                )
     url = pineconeMakeURLForIndex()
-    response = pineconeHTTPPost(url, ctx, JSON3.write(index))
+    response = pineconeHTTPPost(url, ctx.apikey, JSON3.write(body))
+end
+
+function init_v3(apikey::String)
+    return PineconeContextv3(apikey)
+end
+
+function list_index_objects(ctx::PineconeContextv3)
+    response = pineconeHTTPGet("https://api.pinecone.io/indexes", ctx.apikey)
+    ## do better here
+    indexes = JSON3.read(String(response.body), Dict{Symbol, Any})[:indexes]
+    a = JSON3.write(indexes)
+    JSON3.read(JSON3.write(indexes), Vector{PineconeIndexv3})
+end
+
+function list_indexes(ctx::PineconeContextv3)
+    objs = list_index_objects(ctx)
+    map(x->x.name, objs)
+end
+
+function Index(ctx::PineconeContextv3, indexname::String)
+    url = pineconeMakeURLForIndex(indexname)
+    response = pineconeHTTPGet(url, ctx.apikey)
+    return JSON3.read(String(response.body), PineconeIndexv3)
 end
