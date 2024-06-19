@@ -134,3 +134,29 @@ function fetch(ctx::PineconeContextv3, indexobj::PineconeIndexv3, ids::Array{Str
     response = pineconeHTTPGet(url, ctx.apikey)
     return String(response.body)
 end
+
+function query(ctx::PineconeContextv3, indexobj::PineconeIndexv3, queries::PineconeVector, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
+    #rawvectors = [queries[i].values for i in 1:length(queries)]
+    query(ctx, indexobj, queries.values, topk, namespace, includevalues, includemeta, filter)
+end
+
+function query(ctx::PineconeContextv3, indexobj::PineconeIndexv3, vector::Vector{T}, topk::Int64=10, namespace::String="", includevalues::Bool=false, 
+        includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
+    if topk > MAX_TOPK
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK)))
+    end
+    if includevalues == true && topk > MAX_TOPK_WITH_DATA
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_DATA) * " when including data in results"))
+    end
+    if includemeta == true && topk > MAX_TOPK_WITH_META
+        throw(ArgumentError("topk larger than largest topk available of " * string(MAX_TOPK_WITH_META) * " when including meatadata in results"))
+    end
+    url = pineconeMakeURLForIndex(indexobj, ENDPOINTQUERYINDEX)
+    body = Dict{String, Any}("topK"=>topk, "vector"=>vector, "includeValues"=>includevalues, "includeMetadata"=>includemeta, "namespace"=>namespace)
+    if(length(filter) > 0)
+        body["filter"] = filter;
+    end    
+    postbody = JSON3.write(body)
+    response = pineconeHTTPPost(url, ctx.apikey, postbody)
+    return String(response.body)
+end #query
