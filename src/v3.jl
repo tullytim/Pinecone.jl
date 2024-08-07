@@ -126,12 +126,13 @@ list_indexes(ctx::PineconeContextv3) = map(x->x.name, list_index_objects(ctx))
 
 
 """
-    Index(indexname::String)
+    Index(ctx::PineconeContextv3, indexname::String)
 
 Returns a PineconeIndex type which is used for query() and upsert() of data against a specific index.
 
 # Example
 ```julia-repl
+julia> context = Pinecone.init_v3("asdf-1234-zyxv")
 julia> Pinecone.Index("my-index")
 PineconeIndex connected to my-index
 ```
