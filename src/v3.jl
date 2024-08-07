@@ -197,15 +197,15 @@ function upsert(ctx::PineconeContextv3, indexobj::PineconeIndexv3, vectors::Vect
 end #upsert
 
 """
-    delete(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}, deleteall::Bool, namespace::String)
+    delete(ctx::PineconeContextv3, indexobj::PineconeIndexv3, ids::Array{String}, deleteall::Bool, namespace::String)
 
 Deletes vectors indexed by ``ids``.  **Warning:** The entire namespace for the vector will be deleted if deleteall=true
 
 Returns JSON blob as ``String`` of empty object or nothing if fails.
 # Example
 ```julia-repl
-julia> context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
-index = PineconeIndex("my-index")
+julia> context = Pinecone.init_v3("asdf-1234-zyxv")
+index = Pinecone.Index("my-index")
 Pinecone.delete(context, index, ["deleteme1", "deleteme2"], false, "timnamespace")
 {}
 ```
