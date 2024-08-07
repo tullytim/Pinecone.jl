@@ -47,6 +47,25 @@ pineconeMakeURLForIndex() = begin
 end
 
 """
+    init_v3(apikey::String)
+
+Initialize the Pinecone environment using your API Key
+
+This returns a PineconeContextv3 instance which you'll use for subsequent calls such as query() and upsert().
+Your API Key is easily found in the Pinecone console.
+
+# Example
+```julia
+using Pinecone
+context = Pinecone.init_v3("abcd-123456-zyx")
+```
+"""
+
+function init_v3(apikey::String)
+    return PineconeContextv3(apikey)
+end
+
+"""
 create_index(ctx::PineconeContextv3, indexname::String, dimension::Int, metric::String="cosine", cloud::String="aws", region::String="us-east-1")
 
 Creates an index with a given PineconeContextv3, which can be accessed by a call to init(), the name of the index, and the number of dimensions.
@@ -82,26 +101,6 @@ function create_index(ctx::PineconeContextv3, indexname::String, dimension::Int,
     response = pineconeHTTPPost(url, ctx.apikey, JSON3.write(body))
 end
 
-"""
-    init(apikey::String, environment::String)
-
-Initialize the Pinecone environment using your API Key and a specific environment.
-
-This returns a PineconeContext instance which you'll use for subsequent calls such as query() and upsert().
-Your API Key and the cloud environment for your indexes are easily found in the Pinecone console.
-On failure returns nothing.
-
-# Example
-```julia
-using Pinecone
-context = Pinecone.init("abcd-123456-zyx", "us-west1-gcp")
-```
-"""
-
-function init_v3(apikey::String)
-    return PineconeContextv3(apikey)
-end
-
 function list_index_objects(ctx::PineconeContextv3)
     response = pineconeHTTPGet("https://api.pinecone.io/indexes", ctx.apikey)
     ## do better here
@@ -109,7 +108,6 @@ function list_index_objects(ctx::PineconeContextv3)
     a = JSON3.write(indexes)
     JSON3.read(JSON3.write(indexes), Vector{PineconeIndexv3})
 end
-
 
 """
     list_indexes(context::PineconeContext)
@@ -123,6 +121,7 @@ Pinecone.list_indexes(context)
 ["example-index", "filter-example"]
 ```
 """
+
 list_indexes(ctx::PineconeContextv3) = map(x->x.name, list_index_objects(ctx))
 
 
