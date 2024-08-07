@@ -110,13 +110,13 @@ function list_index_objects(ctx::PineconeContextv3)
 end
 
 """
-    list_indexes(context::PineconeContext)
+    list_indexes(context::PineconeContextv3)
 
 Returns a JSON array listing indexes for a given account, which is indicated by the PineconeContext instance passed in.
 
 # Example
 ```julia-repl
-julia> context = Pinecone.init("asdf-1234-zyxv", "us-west1-gcp")
+julia> context = Pinecone.init_v3("asdf-1234-zyxv")
 Pinecone.list_indexes(context)
 ["example-index", "filter-example"]
 ```
