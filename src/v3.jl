@@ -246,9 +246,8 @@ function fetch(ctx::PineconeContextv3, indexobj::PineconeIndexv3, ids::Array{Str
     return String(response.body)
 end
 
-
 """
-   query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
+   query(ctx::PineconeContextv3, indexobj::PineconeIndexv3, queries::Vector{PineconeVector}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}())
 
 Query an index using the given context that match ``queries`` passed in.  The ``PineconeVector`` that is queries is a simple ``PineconeVector`` as described above.
 Note there is an another version of ``query()`` that takes in a ``Vector{Vector{<:AbstractFloat}}`` for the ``queries`` parameter.  Functionally equivalent.
@@ -260,7 +259,7 @@ topk is an optional parameter which defaults to 10 if not specified.  Do recomme
 # Example
 ```julia-repl
 julia> testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-julia> pinecone_context = Pinecone.init("abcdef-1234-zyxv", "us-west1-gcp")
+julia> pinecone_context = Pinecone.init_v3("abcdef-1234-zyxv")
 abcdef-1234-zyxv / us-west1-gcp / 1c9c2f3
 julia> pinecone_index = Pinecone.Index("filter-example");
 julia> testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
@@ -276,7 +275,7 @@ function query(ctx::PineconeContextv3, indexobj::PineconeIndexv3, queries::Pinec
 end
 
 """
-   query(ctx::PineconeContext, indexobj::PineconeIndex, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
+   query(ctx::PineconeContextv3, indexobj::PineconeIndexv3, queries::Vector{Vector{T}}, topk::Int64=10, namespace::String="", includevalues::Bool=false, includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
 
 Query an index using the given context that match ``queries`` passed in. Returns JSON blob as a ``String`` with the results on success, ``nothing`` on failure.
 Note there is an alternate form for ``query()`` that takes in a ``Vector{PineconeVector}`` instead.  Functionally equivalent.
@@ -285,7 +284,7 @@ topk is an optional parameter which defaults to 10 if not specified.  Do recomme
 # Example
 ```julia-repl
 julia> testdict = Dict{String, Any}("genre"=>"documentary", "year"=>2019);
-julia> pinecone_context = Pinecone.init("abcdef-1234-zyxv", "us-west1-gcp")
+julia> pinecone_context = Pinecone.init_v3("abcdef-1234-zyxv")
 abcdef-1234-zyxv / us-west1-gcp / 1c9c2f3
 julia> pinecone_index = Pinecone.Index("filter-example");
 julia> testvector = Pinecone.PineconeVector("testid", [0.3,0.11,0.3,0.3,0.3,0.3,0.3,0.3,0.4,0.3], testdict)
@@ -296,7 +295,6 @@ julia> Pinecone.query(pinecone_context, pinecone_index,
 ],\"namespace\":\"\"}]}"
 ```
 """
-
 function query(ctx::PineconeContextv3, indexobj::PineconeIndexv3, vector::Vector{T}, topk::Int64=10, namespace::String="", includevalues::Bool=false,
         includemeta::Bool=false, filter::Dict{String, Any}=Dict{String,Any}()) where {T<:AbstractFloat}
     if topk > MAX_TOPK
