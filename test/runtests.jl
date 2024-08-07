@@ -12,5 +12,6 @@ include("testfetch.jl")
 include("testquery.jl")
 include("testupsert.jl")
 include("testscale.jl")
+include("v3.jl")
 
 println("*************DONE**************")
