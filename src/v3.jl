@@ -151,7 +151,7 @@ function describe_index_stats(ctx::PineconeContextv3, indexobj::PineconeIndexv3)
 end
 
 """
-    delete_index(ctx::PineconeContext, indexobj::PineconeIndex)
+    delete_index(ctx::PineconeContextv3, indexobj::PineconeIndex)
 
 Deletes an index, returns true on successful response from Pinecone backend.
 
