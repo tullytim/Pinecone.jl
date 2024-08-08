@@ -100,13 +100,10 @@ function create_index(ctx::PineconeContextv3, indexname::String, dimension::Int,
     url = pineconeMakeURLForIndex()
     response = pineconeHTTPPost(url, ctx.apikey, JSON3.write(body))
 end
-
 function list_index_objects(ctx::PineconeContextv3)
     response = pineconeHTTPGet("https://api.pinecone.io/indexes", ctx.apikey)
-    ## do better here
-    indexes = JSON3.read(String(response.body), Dict{Symbol, Any})[:indexes]
-    a = JSON3.write(indexes)
-    JSON3.read(JSON3.write(indexes), Vector{PineconeIndexv3})
+    indexes_dict = JSON3.read(String(response.body), Dict{Symbol, Any})
+    indexes = JSON3.read(JSON3.write(indexes_dict[:indexes]), Vector{PineconeIndexv3})
 end
 
 """
