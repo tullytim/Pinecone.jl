@@ -9,12 +9,6 @@ struct Serverless
     region::String
 end
 
-@kwdef struct PodSpec
-    environment::String
-    podtype::String
-    ## TBD
-end
-
 struct Status
     ready::Bool
     state::String
