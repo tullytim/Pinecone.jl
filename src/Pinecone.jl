@@ -17,6 +17,7 @@ Base.show(io::IO, ctx::PineconeContext) = print(io, ctx.apikey, " / ", ctx.cloud
 struct PineconeIndex
     indexname::String
 end
+
 Base.show(io::IO, index::PineconeIndex) = print(io, "PineconeIndex connected to ", index.indexname) 
 
 struct PineconeVector
@@ -28,6 +29,7 @@ Base.show(io::IO, vec::PineconeVector) = print(io, "PineconeVector is id: ", vec
 # Make PineconeVector type JSON3 writable per https://quinnj.github.io/JSON3.jl/stable/#Read-JSON-into-a-type
 StructTypes.StructType(::Type{PineconeVector}) = StructTypes.UnorderedStruct()
 
+include("v3.jl");
 include("networking.jl");
 
 const ENDPOINTWHOAMI = "actions/whoami"
@@ -109,7 +111,7 @@ function create_index(ctx::PineconeContext, indexname::String, dimension::Int64;
   
     response = pineconeHTTPPost(url, ctx, JSON3.write(postbody))
 end  #create_index
-
+                       
 """
     Index(indexname::String)
 
@@ -286,8 +288,7 @@ function fetch(ctx::PineconeContext, indexobj::PineconeIndex, ids::Array{String}
     renamedids = ["ids=$row" for row in ids] 
     urlargs = "?" * join(renamedids, "&") * "&namespace=$namespace"
     url = pineconeMakeURLForIndex(indexobj, ctx, ENDPOINTFETCH) * urlargs
-    response = pineconeHTTPGet(url, ctx)
-    
+    response = pineconeHTTPGet(url, ctx)   
     return String(response.body)
 end
 
