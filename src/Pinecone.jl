@@ -1,5 +1,3 @@
-__precompile__(false)
-
 module Pinecone
 
 using JSON3 
@@ -50,9 +48,6 @@ const MAX_TOPK_WITH_DATA = 1000
 const MAX_DIMS = 10000
 const MAX_DELETE = 1000
 
-function __init__()
-    nothing
-end
 
 """
     init(apikey::String, environment::String)
